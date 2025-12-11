@@ -252,8 +252,14 @@
                                     <li>低收入戶考生報名費全免，中低收入戶考生報名費減免60%</li>
                                 </ul>
                             </div>
-                            <div class="d-grid"><button type="submit" form="departmentChoicesForm"
-                                    class="btn btn-primary btn-lg">確定送出報名意願和志願選擇 </button></div>
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-outline-secondary" onclick="clearAllChoices()">
+                                    清除所有志願
+                                </button>
+                                <button type="submit" form="departmentChoicesForm" class="btn btn-primary btn-lg">
+                                    確定送出報名意願和志願選擇
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -392,7 +398,7 @@
                 select.disabled = true;
             });
 
-            countdownTimer.innerHTML = ` <div class="alert alert-warning text-center" role="alert"><h5 class="alert-heading text-danger"><strong>報名經已截止囉！</strong></h5></div>`;
+            countdownTimer.innerHTML = ` <div class="alert alert-warning text-center" role="alert"><h5 class="alert-heading text-danger"><strong>報名已經截止囉！</strong></h5></div>`;
 
             // 只有在載入時未截止，但現在截止的情況下，才顯示 modal 和開啟新分頁
             if (!wasExpiredOnLoad) {
@@ -892,6 +898,28 @@
         });
 
         // 檢查志願是否重複，並將最後改變的志願重設
+        // 清除所有志願
+        function clearAllChoices() {
+            if (!confirm('確定要清除所有已選的志願嗎？')) {
+                return;
+            }
+
+            // 重設學校選單
+            document.querySelectorAll('.schoolSelect').forEach(select => {
+                select.value = '';
+            });
+
+            // 重設科系選單
+            document.querySelectorAll('.departmentChoices').forEach(select => {
+                select.value = '';
+                select.innerHTML = '<option value="">選擇科系</option>';
+                select.disabled = true;
+            });
+
+            updateRegistrationFee();
+            updateDepartmentSubmitBtnState();
+        }
+
         function checkDuplicateChoices(changedEl) {
             const vals = Array.from(document.querySelectorAll('.departmentChoices')).map(function (el) {
                 return el.value;
