@@ -267,7 +267,8 @@
                                         說明及注意事項：
                                     </div>
                                     <div class="d-flex align-items-center ms-auto ms-md-0">
-                                        <span class="fs-5 fw-bold text-secondary me-3">距離報名截止還有</span>
+                                        <span id="countdownLabel"
+                                            class="fs-5 fw-bold text-secondary me-3">距離報名截止還有</span>
                                         <div id="countdownTimer"></div>
                                     </div>
                                 </div>
@@ -458,6 +459,12 @@
             allSelects.forEach(select => {
                 select.disabled = true;
             });
+
+            // 隱藏「距離報名截止還有」文字
+            const countdownLabel = document.getElementById('countdownLabel');
+            if (countdownLabel) {
+                countdownLabel.style.display = 'none';
+            }
 
             countdownTimer.innerHTML = ` <div class="alert alert-warning text-center" role="alert"><h5 class="alert-heading text-danger"><strong>報名已經截止囉！</strong></h5></div>`;
 
