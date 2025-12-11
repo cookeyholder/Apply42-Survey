@@ -125,9 +125,7 @@
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg shadow-sm">
         <div class="container-fluid px-2 px-md-4">
-            <a class="navbar-brand" href="<?= serviceUrl ?>">
-                <?= configs["系統名稱"] ?>
-            </a>
+            <a class="navbar-brand" id="navbarBrand" href="#"></a>
         </div>
     </nav>
 
@@ -151,33 +149,23 @@
                         <div class="row text-center mt-3">
                             <div class="col-12 col-sm-6 col-md mb-3">
                                 <div class="text-muted">班級</div>
-                                <div>
-                                    <?= user["班級"] ?>
-                                </div>
+                                <div id="teacherClass"></div>
                             </div>
                             <div class="col-12 col-sm-6 col-md mb-3">
                                 <div class="text-muted">老師</div>
-                                <div>
-                                    <?= user["姓名"] ?>
-                                </div>
+                                <div id="teacherName"></div>
                             </div>
                             <div class="col-12 col-sm-6 col-md mb-3">
                                 <div class="text-muted">班級人數</div>
-                                <div>
-                                    <?= data.length ?>
-                                </div>
+                                <div id="classCount"></div>
                             </div>
                             <div class="col-12 col-sm-6 col-md mb-3">
                                 <div class="text-muted">填答人數</div>
-                                <div>
-                                    <?= data.filter((row) => {const isJoinedIndex = headers.indexOf('是否參加集體報名'); return row[isJoinedIndex] !== ''}).length ?>
-                                </div>
+                                <div id="answeredCount"></div>
                             </div>
                             <div class="col-12 col-sm-6 col-md mb-3">
                                 <div class="text-muted">參加集報人數</div>
-                                <div>
-                                    <?= data.filter((row) => {const isJoinedIndex = headers.indexOf('是否參加集體報名'); return row[isJoinedIndex] === '是'}).length ?>
-                                </div>
+                                <div id="joinedCount"></div>
                             </div>
                             <div class="col-12 col-sm-6 col-md mb-3">
                                 <div class="text-muted">報名倒數計時</div>
@@ -223,16 +211,19 @@
     </div>
 
     <footer class="text-center py-4 text-muted px-2">
-        ©
-        <?= configs["系統名稱"] ?>
+        © <span id="footerText"></span>
     </footer>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            try {
-                const headers = <?!= JSON.stringify(headers || []) ?>;
-                const data = <?!= JSON.stringify(data || []) ?>;
+        // 解析後端傳過來的 JSON 資料
+        const pageData = JSON.parse('<?= pageData ?>');
+        const { user, configs, loginEmail, serviceUrl, headers, data } = pageData;
 
+        document.addEventListener("DOMContentLoaded", function () {
+            // 初始化頁面資料
+            initializePageData();
+
+            try {
                 if (!headers || headers.length === 0) {
                     throw new Error('沒有表頭資料');
                 }
@@ -265,12 +256,12 @@
 
                     // 找出志願相關的索引
                     const wishIndexes = headers
-                        .map((header, index) => ({header, index}))
+                        .map((header, index) => ({ header, index }))
                         .filter(item => /志願[1-6]校系名稱/.test(item.header));
 
                     // 建立志願資訊HTML，只包含非空白的志願
                     const wishesHtml = wishIndexes
-                        .map(({header, index}) => {
+                        .map(({ header, index }) => {
                             if (row[isJoinedIndex] === '否' || !row[index]) {
                                 return '';
                             }
@@ -306,17 +297,6 @@
                         `;
                 }).join('');
 
-                // Statistics Tab Data Loading
-                google.script.run
-                    .withSuccessHandler(populateGroupFilterStats)
-                    .withFailureHandler(displayErrorStats)
-                    .getUniqueGroupNames();
-
-                google.script.run
-                    .withSuccessHandler(displayStats)
-                    .withFailureHandler(displayErrorStats)
-                    .getRawStatisticsData();
-
                 container.innerHTML = cardsHtml;
 
             } catch (error) {
@@ -332,8 +312,53 @@
             }
         });
 
+        // 初始化頁面資料
+        function initializePageData() {
+            // 導航列
+            const navBrand = document.getElementById('navbarBrand');
+            if (navBrand) {
+                navBrand.href = serviceUrl;
+                navBrand.textContent = configs['系統名稱'] || '';
+            }
+
+            // 教師資訊
+            document.getElementById('teacherClass').textContent = user['班級'] || '';
+            document.getElementById('teacherName').textContent = user['姓名'] || '';
+            document.getElementById('classCount').textContent = data.length;
+
+            // 計算填答和參加人數
+            const isJoinedIndex = headers.indexOf('是否參加集體報名');
+            const answeredCount = data.filter(row => row[isJoinedIndex] !== '').length;
+            const joinedCount = data.filter(row => row[isJoinedIndex] === '是').length;
+            document.getElementById('answeredCount').textContent = answeredCount;
+            document.getElementById('joinedCount').textContent = joinedCount;
+
+            // 頁尾
+            const footerText = document.getElementById('footerText');
+            if (footerText) {
+                footerText.textContent = configs['系統名稱'] || '';
+            }
+        }
+
+        // 統計頁籤延遲載入
+        let statsLoaded = false;
+        document.getElementById('stats-tab').addEventListener('shown.bs.tab', function () {
+            if (!statsLoaded) {
+                statsLoaded = true;
+                google.script.run
+                    .withSuccessHandler(populateGroupFilterStats)
+                    .withFailureHandler(function (error) { console.error('載入群類失敗:', error); })
+                    .getUniqueGroupNames();
+
+                google.script.run
+                    .withSuccessHandler(displayStats)
+                    .withFailureHandler(function (error) { console.error('載入統計失敗:', error); })
+                    .getRawStatisticsData();
+            }
+        });
+
         function updateCountdown() {
-            const endTime = new Date("<?= configs['系統關閉時間'] ?>");
+            const endTime = new Date(configs['系統關閉時間']);
             const countdownTimer = document.getElementById("countdownTimer");
             const now = new Date();
             const timeLeft = endTime - now;
@@ -395,7 +420,7 @@
             }
 
             if (data && data.error) {
-                displayErrorStats({message: data.error});
+                displayErrorStats({ message: data.error });
                 return;
             }
 
