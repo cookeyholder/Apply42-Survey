@@ -719,14 +719,10 @@
         }
 
         // 建立學校->科系對照表
-        let schoolDepartmentMap = {}
-
-            ;
+        let schoolDepartmentMap = {};
 
         function buildSchoolDepartmentMap(options) {
-            schoolDepartmentMap = {}
-
-                ;
+            schoolDepartmentMap = {};
 
             options.forEach(choice => {
                 // 解析選項格式: "011001-國立臺灣科技大學_機械工程系(該校可報志願數...)"
@@ -1130,12 +1126,12 @@
                 const groupData = dataToDisplay[groupName];
                 if (groupData.length === 0) continue;
 
-                let groupHtml = `< div class="group-container card" ><div class="card-header bg-primary text-white"><h2 class="group-title card-title" style="color: white; border-bottom: none; margin-bottom: 0;">${escapeHtmlStats(groupName)}</h2></div><ul class="list-group list-group-flush">`;
+                let groupHtml = `<div class="group-container card"><div class="card-header bg-primary text-white"><h2 class="group-title card-title" style="color: white; border-bottom: none; margin-bottom: 0;">${escapeHtmlStats(groupName)}</h2></div><ul class="list-group list-group-flush">`;
 
                 groupData.forEach(item => {
-                    groupHtml += `<li class="list-group-item" > <span>${escapeHtmlStats(item.name)}</span> <span class="badge bg-secondary rounded-pill count-badge" >${item.count}人</span> </li>`;
+                    groupHtml += `<li class="list-group-item"><span>${escapeHtmlStats(item.name)}</span> <span class="badge bg-secondary rounded-pill count-badge">${item.count}人</span></li>`;
                 });
-                groupHtml += `</ul></div > `;
+                groupHtml += `</ul></div>`;
                 resultDiv.innerHTML += groupHtml;
             }
         }
@@ -1164,9 +1160,8 @@
 
         function escapeHtmlStats(unsafe) {
             if (typeof unsafe !== 'string') return '';
-            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, " &quot; ")
+            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
-
         }
 
         // 隱藏所有表單和送出按鈕的函式
