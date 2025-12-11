@@ -541,10 +541,12 @@
 
             if (schoolCode && schoolDepartmentMap[schoolCode]) {
                 const school = schoolDepartmentMap[schoolCode];
-                school.departments.forEach(dept => {
+                // 依科系代碼排序（後3碼）
+                const sortedDepts = [...school.departments].sort((a, b) => a.code.localeCompare(b.code));
+                sortedDepts.forEach(dept => {
                     const opt = document.createElement('option');
                     opt.value = dept.code;
-                    opt.textContent = dept.name;
+                    opt.textContent = `${dept.code.slice(3)}-${dept.name}`;
                     deptSelect.appendChild(opt);
                 });
                 deptSelect.disabled = false;
@@ -624,12 +626,14 @@
                 deptSelect.id = `departmentChoices_${wishNum}`;
                 deptSelect.innerHTML = '<option value="">選擇科系</option>';
 
-                // 如果有已選學校，填入該校科系
+                // 如果有已選學校，填入該校科系（依代碼排序）
                 if (selectedSchoolCode && schoolDepartmentMap[selectedSchoolCode]) {
-                    schoolDepartmentMap[selectedSchoolCode].departments.forEach(dept => {
+                    const sortedDepts = [...schoolDepartmentMap[selectedSchoolCode].departments]
+                        .sort((a, b) => a.code.localeCompare(b.code));
+                    sortedDepts.forEach(dept => {
                         const opt = document.createElement('option');
                         opt.value = dept.code;
-                        opt.textContent = dept.name;
+                        opt.textContent = `${dept.code.slice(3)}-${dept.name}`;
                         if (dept.code === selectedDeptCode) {
                             opt.selected = true;
                         }
