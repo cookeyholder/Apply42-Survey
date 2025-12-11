@@ -12,11 +12,19 @@ function showStatisticsPage() {
 }
 
 /**
- * @description 取得原始統計資料供前端使用
+ * @description 取得原始統計資料供前端使用（含 20 分鐘快取）
  * @returns {Object} 依類群分類的志願統計資料或包含錯誤訊息的物件
  */
 function getRawStatisticsData() {
   try {
+    // 嘗試從快取取得
+    const cacheKey = 'STATISTICS_RAW_DATA';
+    const cachedData = getCacheData(cacheKey);
+    if (cachedData) {
+      Logger.log('(getRawStatisticsData)從快取取得統計資料');
+      return cachedData;
+    }
+    
     if (!studentChoiceSheet) {
       Logger.log("「考生志願列表」工作表不存在");
       return { error: "「考生志願列表」工作表不存在，無法產生統計資料。" };
@@ -109,6 +117,10 @@ function getRawStatisticsData() {
     }
 
     Logger.log("產生的統計資料：%s", JSON.stringify(sortedStatistics));
+    
+    // 快取統計結果（20 分鐘）
+    setCacheData(cacheKey, sortedStatistics, 1200);
+    
     return sortedStatistics;
   } catch (err) {
     Logger.log("getRawStatisticsData 發生錯誤: %s", err.message);
@@ -118,11 +130,19 @@ function getRawStatisticsData() {
 }
 
 /**
- * @description 取得「考生志願列表」中「報考群(類)名稱」的所有唯一值
+ * @description 取得「考生志願列表」中「報考群(類)名稱」的所有唯一值（含 20 分鐘快取）
  * @returns {Object} 包含唯一群類名稱陣列或錯誤訊息的物件
  */
 function getUniqueGroupNames() {
   try {
+    // 嘗試從快取取得
+    const cacheKey = 'STATISTICS_GROUP_NAMES';
+    const cachedData = getCacheData(cacheKey);
+    if (cachedData) {
+      Logger.log('(getUniqueGroupNames)從快取取得群類名稱');
+      return cachedData;
+    }
+    
     if (!studentChoiceSheet) {
       Logger.log("「考生志願列表」工作表不存在");
       return { error: "「考生志願列表」工作表不存在，無法取得群類名稱。" };
@@ -169,7 +189,13 @@ function getUniqueGroupNames() {
       "取得的唯一群類名稱：%s",
       JSON.stringify(Array.from(groupNames).sort())
     );
-    return { groupNames: Array.from(groupNames).sort() }; // 返回排序後的陣列
+    
+    const result = { groupNames: Array.from(groupNames).sort() };
+    
+    // 快取群類名稱（20 分鐘）
+    setCacheData(cacheKey, result, 1200);
+    
+    return result;
   } catch (err) {
     Logger.log("getUniqueGroupNames 發生錯誤: %s", err.message);
     Logger.log("錯誤堆疊: %s", err.stack);

@@ -673,3 +673,62 @@ function sanitizeHtml(html) {
     return "";
   }
 }
+
+/**
+ * @description 批次取得學生頁面所需的所有資料（不含統計資料，統計延遲載入）
+ * @param {Object<string, any>} user - 使用者資料
+ * @returns {Object} 包含 user, configs, notifications, limitOfSchools, optionData 的物件
+ */
+function getAllPageData(user) {
+  try {
+    const configs = getConfigs();
+    const notifications = getNotifications(configs);
+    const limitOfSchools = getLimitOfSchools();
+    const optionData = getOptionData(user);
+
+    const pageData = {
+      user: user,
+      configs: configs,
+      notifications: notifications,
+      limitOfSchools: limitOfSchools,
+      isJoined: optionData.isJoined,
+      selectedChoices: optionData.selectedChoices,
+      departmentOptions: optionData.departmentOptions,
+      loginEmail: Session.getActiveUser().getEmail(),
+      serviceUrl: getServiceUrl(),
+    };
+
+    Logger.log("(getAllPageData)成功批次取得頁面資料");
+    return pageData;
+  } catch (error) {
+    Logger.log("(getAllPageData)批次取得頁面資料時發生錯誤：%s", error.message);
+    throw error;
+  }
+}
+
+/**
+ * @description 批次取得老師頁面所需的所有資料（不含統計資料）
+ * @param {Object<string, any>} user - 使用者資料（老師）
+ * @returns {Object} 包含 user, configs, serviceUrl, headers, data 的物件
+ */
+function getAllTeacherPageData(user) {
+  try {
+    const configs = getConfigs();
+    const studentData = getTraineesDepartmentChoices(user);
+
+    const pageData = {
+      user: user,
+      configs: configs,
+      loginEmail: Session.getActiveUser().getEmail(),
+      serviceUrl: getServiceUrl(),
+      headers: studentData.headers,
+      data: studentData.data,
+    };
+
+    Logger.log("(getAllTeacherPageData)成功批次取得老師頁面資料");
+    return pageData;
+  } catch (error) {
+    Logger.log("(getAllTeacherPageData)批次取得老師頁面資料時發生錯誤：%s", error.message);
+    throw error;
+  }
+}
