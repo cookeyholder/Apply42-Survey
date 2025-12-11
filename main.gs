@@ -2,7 +2,7 @@
 const MAX_SHEET_ROWS = 10000;
 const REQUEST_TIMEOUT = 30000; // 30 秒
 const MAX_PARAMETER_LENGTH = 500;
-const ALLOWED_PARAMETERS = ["系統名稱", "系統關閉時間", "報名學校代碼"];
+const ALLOWED_PARAMETERS = ["系統名稱", "系統關閉時間", "報名學校代碼", "承辦單位", "聯絡電話", "電子郵件"];
 
 const ss = SpreadsheetApp.getActiveSpreadsheet();
 const configSheet = ss.getSheetByName("參數設定");

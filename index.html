@@ -199,7 +199,7 @@
         }
 
         .wish-row {
-            background-color: #F8F9FA;
+            background-color: #e1e2e3;
             /* 區隔每個志願區塊 */
             padding: 15px;
             border-radius: 10px;
@@ -368,6 +368,47 @@
             </div>
         </div>
     </div>
+
+    <!-- 聯絡資訊區塊 -->
+    <div class="container-fluid bg-light py-4 mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-primary mb-3">
+                            <i class="bi bi-info-circle-fill me-2"></i>聯絡資訊
+                        </h5>
+                        <div class="row">
+                            <div class="col-sm-4 mb-2">
+                                <div class="p-2">
+                                    <i class="bi bi-building text-secondary mb-1"></i>
+                                    <div class="text-muted">承辦單位</div>
+                                    <div class="fw-bold" id="contactUnit">-</div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4 mb-2">
+                                <div class="p-2">
+                                    <i class="bi bi-telephone text-secondary mb-1"></i>
+                                    <div class="text-muted">聯絡電話</div>
+                                    <div class="fw-bold" id="contactPhone">-</div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4 mb-2">
+                                <div class="p-2">
+                                    <i class="bi bi-envelope text-secondary mb-1"></i>
+                                    <div class="text-muted">電子郵件</div>
+                                    <div class="fw-bold">
+                                        <a id="contactEmail" href="#" class="text-decoration-none">-</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer class="text-center py-4 text-muted px-2">© <span id="footerText"></span></footer>
     <script> // 解析後端傳過來的 JSON 資料
         const pageData = JSON.parse('<?= pageData ?>');
@@ -557,7 +598,6 @@
 
             if (navBrand) {
                 navBrand.href = serviceUrl;
-                // navBrand.textContent = configs['系統名稱'] || '';
                 navBrand.innerHTML = configs['學校名稱'] + '<br>' + configs['系統名稱'] || '';
             }
 
@@ -600,7 +640,29 @@
             const footerText = document.getElementById('footerText');
 
             if (footerText) {
-                footerText.textContent = configs['系統名稱'] || '';
+                footerText.innerHTML = `<a href="https://www.google.com/maps?q=${encodeURIComponent(configs['學校名稱'] || '')}" target="_blank">${configs['學校名稱'] + configs['系統名稱'] || ''}</a>`;
+            }
+
+            // 聯絡資訊
+            const contactUnit = document.getElementById('contactUnit');
+            const contactPhone = document.getElementById('contactPhone');
+            const contactEmail = document.getElementById('contactEmail');
+
+            if (contactUnit) {
+                contactUnit.textContent = configs['承辦單位'] || '-';
+            }
+            if (contactPhone) {
+                contactPhone.textContent = configs['聯絡電話'] || '-';
+            }
+            if (contactEmail) {
+                const email = configs['電子郵件'] || '-';
+                if (email !== '-') {
+                    contactEmail.href = `mailto:${email}`;
+                    contactEmail.textContent = email;
+                } else {
+                    contactEmail.href = '#';
+                    contactEmail.textContent = '-';
+                }
             }
         }
 
