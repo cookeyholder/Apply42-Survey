@@ -129,20 +129,15 @@ function doGet(request) {
 function renderStudentPage(user, configs, wishReceived = false) {
   try {
     const template = HtmlService.createTemplateFromFile("index");
-    template.loginEmail = Session.getActiveUser().getEmail();
-    template.serviceUrl = getServiceUrl();
-    template.user = user;
-    template.configs = configs;
-    template.notifications = getNotifications(configs);
-    template.limitOfSchools = getLimitOfSchools();
-    template.wishesReceivedMessage = wishReceived
-      ? getWishesReceivedMessage()
-      : "";
-
-    const optionData = getOptionData(user);
-    template.isJoined = optionData.isJoined;
-    template.selectedChoices = optionData.selectedChoices;
-    template.departmentOptions = optionData.departmentOptions;
+    
+    // 使用批次資料讀取
+    const pageData = getAllPageData(user);
+    
+    // 加入志願已收到訊息
+    pageData.wishesReceivedMessage = wishReceived ? getWishesReceivedMessage() : "";
+    
+    // 將所有資料序列化為 JSON 傳遞給模板
+    template.pageData = JSON.stringify(pageData);
 
     return setXFrameOptionsSafely(
       template.evaluate().setTitle("四技二專甄選入學志願調查系統")
@@ -167,15 +162,13 @@ function getWishesReceivedMessage() {
  */
 function renderTeacherPage(user, configs, templateName = "teacherView") {
   try {
-    const studentData = getTraineesDepartmentChoices(user);
     const template = HtmlService.createTemplateFromFile(templateName);
-
-    template.loginEmail = Session.getActiveUser().getEmail();
-    template.serviceUrl = getServiceUrl();
-    template.user = user;
-    template.configs = configs;
-    template.headers = studentData.headers;
-    template.data = studentData.data;
+    
+    // 使用批次資料讀取
+    const pageData = getAllTeacherPageData(user);
+    
+    // 將所有資料序列化為 JSON 傳遞給模板
+    template.pageData = JSON.stringify(pageData);
 
     return setXFrameOptionsSafely(
       template.evaluate().setTitle("老師查詢班級學生志願")
