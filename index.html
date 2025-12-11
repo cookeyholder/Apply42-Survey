@@ -571,12 +571,12 @@
             const now = new Date();
             const isExpired = now > endTime;
 
-            // 建立學校選項 HTML
+            // 建立學校選項 HTML（依學校代碼排序）
             let schoolOptionsHtml = '<option value="">選擇學校</option>';
             const sortedSchools = Object.entries(schoolDepartmentMap)
-                .sort((a, b) => a[1].name.localeCompare(b[1].name, 'zh-TW'));
+                .sort((a, b) => a[0].localeCompare(b[0])); // 依學校代碼排序
             sortedSchools.forEach(([code, school]) => {
-                schoolOptionsHtml += `<option value="${code}">${school.name} (可報${school.limit}個)</option>`;
+                schoolOptionsHtml += `<option value="${code}">${code}-${school.name} (可報${school.limit}個)</option>`;
             });
 
             for (let i = userSelectedChoices.length - 1; i >= 0; i--) {
