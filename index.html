@@ -149,28 +149,23 @@
             background-color: transparent;
         }
 
-        /* Modern Countdown Timer */
+        /* Redesigned Text-Only Countdown */
         .countdown-container {
             display: inline-flex;
-            gap: 0.8rem;
-            align-items: center;
+            gap: 1.2rem;
+            align-items: baseline;
             vertical-align: middle;
         }
 
         .countdown-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: #2C3E50;
-            /* Dark background for contrast */
-            padding: 0.4rem 0.8rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            min-width: 60px;
-            border: 1px solid #34495E;
-            border-bottom: 3px solid #4ECDC4;
-            /* Mint accent */
-            position: relative;
+            display: inline-flex;
+            flex-direction: row;
+            align-items: baseline;
+            background: none;
+            padding: 0;
+            border: none;
+            box-shadow: none;
+            min-width: auto;
         }
 
         .countdown-item::before {
@@ -178,19 +173,21 @@
         }
 
         .countdown-value {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #fff;
-            line-height: 1.1;
-            font-family: 'Courier New', monospace;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #dc3545;
+            /* Red */
+            line-height: 1;
+            font-family: 'Arial', sans-serif;
+            text-shadow: none;
         }
 
         .countdown-label {
-            font-size: 0.65rem;
-            color: #BDC3C7;
-            text-transform: uppercase;
-            margin-top: 2px;
+            font-size: 1rem;
+            color: #495057;
+            font-weight: 600;
+            margin-left: 0.3rem;
+            text-transform: none;
         }
 
         .wish-row {
