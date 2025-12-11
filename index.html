@@ -347,15 +347,15 @@
             }
 
             if (hours > 0) {
-                countdownTimer.innerHTML = `<strong class="text-danger">距離截止時間還有 ${hours}小時 ${minutes}分鐘 ${seconds}秒</strong>`;
+                countdownTimer.innerHTML = `<strong class="text-danger">距離截止時間還有 ${hours} 小時 ${minutes} 分鐘 ${seconds} 秒</strong>`;
             }
 
             else if (minutes > 0) {
-                countdownTimer.innerHTML = `<strong class="text-danger">距離截止時間還有 ${minutes}分鐘 ${seconds}秒</strong>`;
+                countdownTimer.innerHTML = `<strong class="text-danger">距離截止時間還有 ${minutes} 分鐘 ${seconds} 秒</strong>`;
             }
 
             else {
-                countdownTimer.innerHTML = `<strong class="text-danger">距離截止時間還有 ${seconds}秒</strong>`;
+                countdownTimer.innerHTML = `<strong class="text-danger">距離截止時間還有 ${seconds} 秒</strong>`;
             }
 
             if (timeLeft <= 0) {
@@ -430,7 +430,7 @@
                 '五',
                 '六'][date.getDay()]; // 星期幾
 
-            return `${yyyy}年${mm}月${dd}日(星期${weekDay}) ${hh}時${MM}分`;
+            return `${yyyy} 年 ${mm} 月 ${dd} 日(星期${weekDay}) ${hh} 時 ${MM} 分`;
         }
 
         document.addEventListener('DOMContentLoaded', function () {
