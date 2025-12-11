@@ -161,39 +161,36 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: #fff;
-            padding: 0.4rem 0.6rem;
+            background: #2C3E50;
+            /* Dark background for contrast */
+            padding: 0.4rem 0.8rem;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            /* Soft shadow */
-            min-width: 50px;
-            border: 1px solid #eef2f7;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            min-width: 60px;
+            border: 1px solid #34495E;
+            border-bottom: 3px solid #4ECDC4;
+            /* Mint accent */
             position: relative;
         }
 
         .countdown-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, #4ECDC4, #556270);
-            border-radius: 8px 8px 0 0;
+            content: none;
         }
 
         .countdown-value {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            color: #333;
+            color: #fff;
             line-height: 1.1;
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .countdown-label {
-            font-size: 0.6rem;
-            color: #888;
+            font-size: 0.65rem;
+            color: #BDC3C7;
             text-transform: uppercase;
+            margin-top: 2px;
         }
 
         .wish-row {
@@ -266,8 +263,12 @@
                         <!-- <h5 class="card-title text-center">說明</h5>-->
                         <div class="row mt-3">
                             <div class="col-12">
-                                <div class="mb-3">
-                                    <div class="fw-bold fs-5 text-muted mb-2">說明及注意事項：</div>
+                                <div
+                                    class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 p-3 bg-white rounded shadow-sm border-start border-5 border-primary">
+                                    <div class="fw-bold fs-4 text-dark m-0 d-flex align-items-center">
+                                        <i class="bi bi-info-circle-fill me-2 text-primary"></i>
+                                        說明及注意事項：
+                                    </div>
                                     <div id="countdownTimer"></div>
                                 </div>
                                 <ol id="notificationsList">
