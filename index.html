@@ -149,6 +149,53 @@
             background-color: transparent;
         }
 
+        /* Modern Countdown Timer */
+        .countdown-container {
+            display: inline-flex;
+            gap: 0.8rem;
+            align-items: center;
+            vertical-align: middle;
+        }
+
+        .countdown-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #fff;
+            padding: 0.4rem 0.6rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            /* Soft shadow */
+            min-width: 50px;
+            border: 1px solid #eef2f7;
+            position: relative;
+        }
+
+        .countdown-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #4ECDC4, #556270);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .countdown-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            line-height: 1.1;
+            font-family: monospace;
+        }
+
+        .countdown-label {
+            font-size: 0.6rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+
         .wish-row {
             background-color: #F8F9FA;
             /* 區隔每個志願區塊 */
@@ -219,7 +266,10 @@
                         <!-- <h5 class="card-title text-center">說明</h5>-->
                         <div class="row mt-3">
                             <div class="col-12">
-                                <p>說明及注意事項：<span id="countdownTimer"></span></p>
+                                <div class="mb-3">
+                                    <div class="fw-bold fs-5 text-muted mb-2">說明及注意事項：</div>
+                                    <div id="countdownTimer"></div>
+                                </div>
                                 <ol id="notificationsList">
                                     <!-- 通知將由 JavaScript 動態填入 -->
                                 </ol>
@@ -352,17 +402,27 @@
                 endTimeBox.innerHTML = formatDateTime(endTime);
             }
 
+            let timerHtml = '';
+
             if (hours > 0) {
-                countdownTimer.innerHTML = `<strong class="text-danger">距離截止時間還有 ${hours} 小時 ${minutes} 分鐘 ${seconds} 秒</strong>`;
+                timerHtml += `
+                    <div class="countdown-item">
+                        <span class="countdown-value">${hours}</span>
+                        <span class="countdown-label">時</span>
+                    </div>`;
             }
 
-            else if (minutes > 0) {
-                countdownTimer.innerHTML = `<strong class="text-danger">距離截止時間還有 ${minutes} 分鐘 ${seconds} 秒</strong>`;
-            }
+            timerHtml += `
+                <div class="countdown-item">
+                    <span class="countdown-value">${minutes}</span>
+                    <span class="countdown-label">分</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-value">${seconds}</span>
+                    <span class="countdown-label">秒</span>
+                </div>`;
 
-            else {
-                countdownTimer.innerHTML = `<strong class="text-danger">距離截止時間還有 ${seconds} 秒</strong>`;
-            }
+            countdownTimer.innerHTML = `<div class="countdown-container">${timerHtml}</div>`;
 
             if (timeLeft <= 0) {
                 stopElementsOfForms();
