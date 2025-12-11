@@ -326,30 +326,14 @@ function doPost(request) {
 }
 
 /**
- * @description 安全地設定 XFrame 選項
+ * @description 安全地設定 XFrame 選項（預設不允許被外部 frame 嵌入）
  * @param {HtmlOutput} htmlOutput - HTML 輸出物件
  * @returns {HtmlOutput} 設定完成的 HTML 輸出物件
  */
 function setXFrameOptionsSafely(htmlOutput) {
-  try {
-    // 檢查 HtmlService.XFrameOptionsMode 是否存在
-    if (
-      HtmlService &&
-      HtmlService.XFrameOptionsMode &&
-      HtmlService.XFrameOptionsMode.ALLOWALL
-    ) {
-      // 設定為 ALLOWALL 以允許在任何 frame 中顯示
-      return htmlOutput.setXFrameOptionsMode(
-        HtmlService.XFrameOptionsMode.ALLOWALL
-      );
-    } else {
-      Logger.log("XFrameOptionsMode.ALLOWALL 未定義，跳過設定");
-      return htmlOutput;
-    }
-  } catch (error) {
-    Logger.log("設定 XFrameOptionsMode 時發生錯誤：%s", error.message);
-    return htmlOutput;
-  }
+  // 預設不允許被外部 frame 嵌入，直接回傳 htmlOutput
+  // 使用預設的 X-Frame-Options 行為以防止 clickjacking 攻擊
+  return htmlOutput;
 }
 
 function logAdder(user, record) {

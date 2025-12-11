@@ -15,54 +15,138 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous" />
     <style>
-        .navbar-brand {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #333;
+        /* 引入 Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+        :root {
+            /* 現代柔和配色 */
+            --bs-primary: #5D9CEC;
+            /* 柔和藍 */
+            --bs-primary-rgb: 93, 156, 236;
+            --bs-secondary: #AAB2BD;
+            /* 淺灰 */
+            --bs-success: #48CFAD;
+            /* 薄荷綠 */
+            --bs-danger: #FC6E51;
+            /* 珊瑚紅 */
+            --bs-warning: #FFCE54;
+            /* 太陽黃 */
+            --bs-info: #4FC1E9;
+            --bs-light: #F5F7FA;
+            --bs-dark: #434A54;
+
+            /* 字體設定 */
+            --bs-body-font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+            --bs-body-color: #434A54;
+            --bs-body-bg: #F5F7FA;
         }
 
-        /* 卡片主題邊框及標題色彩 */
+        body {
+            font-family: var(--bs-body-font-family);
+            color: var(--bs-body-color);
+            background-color: var(--bs-body-bg) !important;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: #434A54 !important;
+        }
+
         .card {
-            border-left: 5px solid #FF6B6B;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background-color: #FFFFFF;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--bs-primary), var(--bs-success));
+            opacity: 0.8;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
         }
 
         .card-title {
-            color: #FF6B6B;
+            color: var(--bs-dark);
+            font-weight: 700;
         }
 
-        /* 主要按鈕改為清新綠 */
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.5rem 1.2rem;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
         .btn-primary {
-            background-color: #4ECDC4;
-            border-color: #4ECDC4;
+            background-color: var(--bs-primary);
+            border-color: var(--bs-primary);
         }
 
         .btn-primary:hover {
-            background-color: #38B2A4;
-            border-color: #38B2A4;
+            background-color: #4A89DC;
+            border-color: #4A89DC;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(93, 156, 236, 0.4);
         }
 
-        /* 學生資料卡片樣式 */
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 8px;
+            border: 1px solid #CCD1D9;
+            padding: 0.6rem 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.25rem rgba(93, 156, 236, 0.15);
+        }
+
+        /* 學生資料卡片優化 */
         .student-card {
-            border: 1px solid #dee2e6;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
+            border: none;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
             background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+            transition: all 0.3s ease;
         }
 
         .student-card:hover {
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
         }
 
         .student-card-header {
-            background-color: #f8f9fa;
-            padding: 0.75rem;
-            border-bottom: 1px solid #dee2e6;
-            border-radius: 0.5rem 0.5rem 0 0;
-            font-weight: bold;
+            background-color: #F8F9FA;
+            padding: 1rem;
+            border-bottom: 1px solid #E6E9ED;
+            border-radius: 12px 12px 0 0;
+            font-weight: 700;
+            color: var(--bs-dark);
         }
 
         .student-card-body {
-            padding: 0.75rem;
+            padding: 1.5rem;
         }
 
         .student-info {
@@ -78,12 +162,13 @@
         }
 
         .student-info-label {
-            color: #6c757d;
+            color: #AAB2BD;
             font-size: 0.9rem;
         }
 
         .student-info-value {
             font-size: 1.1rem;
+            color: #434A54;
         }
 
         /* 報名費用標籤 */
@@ -99,6 +184,24 @@
             .student-info-item {
                 min-width: 150px;
             }
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: #656D78;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: var(--bs-primary);
+            background-color: rgba(93, 156, 236, 0.05);
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--bs-primary);
+            border-bottom: 3px solid var(--bs-primary);
+            background-color: transparent;
         }
 
         /* Styles for Statistics Tab */
@@ -123,7 +226,7 @@
 </head>
 
 <body class="bg-light">
-    <nav class="navbar navbar-expand-lg shadow-sm">
+    <nav class="navbar navbar-expand-lg">
         <div class="container-fluid px-2 px-md-4">
             <a class="navbar-brand" id="navbarBrand" href="#"></a>
         </div>
@@ -144,7 +247,7 @@
             <div class="tab-pane fade show active" id="survey-tab-pane" role="tabpanel" aria-labelledby="survey-tab"
                 tabindex="0">
                 <!-- 老師資訊卡片 -->
-                <div class="card shadow fs-4 mb-3">
+                <div class="card fs-4 mb-3">
                     <div class="card-body">
                         <div class="row text-center mt-3">
                             <div class="col-12 col-sm-6 col-md mb-3">
@@ -176,7 +279,7 @@
                 </div>
 
                 <!-- 學生資料表格卡片 -->
-                <div class="card shadow fs-4 mb-3">
+                <div class="card fs-4 mb-3">
                     <div class="card-body">
                         <div id="student-data-container">
                             <!-- 學生資料卡片將由 JavaScript 動態產生 -->
@@ -451,7 +554,7 @@
                 const groupData = dataToDisplay[groupName];
                 if (groupData.length === 0) continue;
 
-                let groupHtml = `<div class="group-container card shadow-sm">
+                let groupHtml = `<div class="group-container card">
                                         <div class="card-header bg-primary text-white">
                                             <h2 class="group-title card-title" style="color: white; border-bottom: none; margin-bottom: 0;">${escapeHtmlStats(groupName)}</h2>
                                         </div>
