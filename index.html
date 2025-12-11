@@ -500,54 +500,167 @@
             return null;
         }
 
-        // 插入志願選擇欄位
+        // 建立學校->科系對照表
+        let schoolDepartmentMap = {};
+        function buildSchoolDepartmentMap(options) {
+            schoolDepartmentMap = {};
+            options.forEach(choice => {
+                // 解析選項格式: "011001-國立臺灣科技大學_機械工程系(該校可報志願數...)"
+                const code = choice.slice(0, 6);
+                const schoolCode = code.slice(0, 3);
+                const matchSchool = choice.match(/-(.*?)_/);
+                const matchDept = choice.match(/_(.+?)\(/);
+                const departmentLimits = parseInt(choice.toString().slice(-2, -1)) || 3;
+
+                if (matchSchool && matchDept) {
+                    if (!schoolDepartmentMap[schoolCode]) {
+                        schoolDepartmentMap[schoolCode] = {
+                            name: matchSchool[1],
+                            limit: departmentLimits,
+                            departments: []
+                        };
+                    }
+                    schoolDepartmentMap[schoolCode].departments.push({
+                        code: code,
+                        name: matchDept[1],
+                        fullText: choice.match(/^(.*?)(?=\(該校可報志願數)/)?.[0] || choice
+                    });
+                }
+            });
+            return schoolDepartmentMap;
+        }
+
+        // 處理學校選擇變更
+        function handleSchoolChange(schoolSelect) {
+            const wishIndex = schoolSelect.dataset.wish;
+            const deptSelect = document.getElementById(`departmentChoices_${wishIndex}`);
+            const schoolCode = schoolSelect.value;
+
+            // 清空並更新科系選單
+            deptSelect.innerHTML = '<option value="">選擇科系</option>';
+
+            if (schoolCode && schoolDepartmentMap[schoolCode]) {
+                const school = schoolDepartmentMap[schoolCode];
+                school.departments.forEach(dept => {
+                    const opt = document.createElement('option');
+                    opt.value = dept.code;
+                    opt.textContent = dept.name;
+                    deptSelect.appendChild(opt);
+                });
+                deptSelect.disabled = false;
+            } else {
+                deptSelect.disabled = true;
+            }
+
+            updateRegistrationFee();
+            updateDepartmentSubmitBtnState();
+        }
+
+        // 插入志願選擇欄位（階層式雙選單）
         function insertDepartmentSelectionFields() {
             const userIsJoined = isJoined;
             const refInput = document.getElementById('isJoinedInput');
             const userSelectedChoices = selectedChoices;
             const userDepartmentOptions = departmentOptions;
 
+            // 建立學校-科系對照表
+            buildSchoolDepartmentMap(userDepartmentOptions);
+
             // 檢查是否已過期
             const endTime = new Date(configs['系統關閉時間']);
             const now = new Date();
             const isExpired = now > endTime;
 
+            // 建立學校選項 HTML
+            let schoolOptionsHtml = '<option value="">選擇學校</option>';
+            const sortedSchools = Object.entries(schoolDepartmentMap)
+                .sort((a, b) => a[1].name.localeCompare(b[1].name, 'zh-TW'));
+            sortedSchools.forEach(([code, school]) => {
+                schoolOptionsHtml += `<option value="${code}">${school.name} (可報${school.limit}個)</option>`;
+            });
+
             for (let i = userSelectedChoices.length - 1; i >= 0; i--) {
-                // 建立 mb-3 div
+                const wishNum = i + 1;
+                const selectedDeptCode = userSelectedChoices[i]?.toString().trim() || '';
+                const selectedSchoolCode = selectedDeptCode ? selectedDeptCode.slice(0, 3) : '';
+
+                // 建立主容器
                 const div = document.createElement('div');
-                div.className = 'mb-3';
+                div.className = 'mb-3 wish-row';
 
                 // 建立 label
                 const label = document.createElement('label');
-                label.setAttribute('for', `departmentChoices_${i + 1}`);
                 label.className = 'form-label';
-                label.textContent = `志願 ${i + 1}`;
+                label.textContent = `志願 ${wishNum}`;
 
-                // 建立 select
-                const select = document.createElement('select');
-                select.className = 'form-select form-select-sm departmentChoices fs-5';
-                select.name = `departmentChoices_${i + 1}`;
-                select.id = `departmentChoices_${i + 1}`;
-                // 如果已過期，直接設定為停用狀態
+                // 建立 row 容器
+                const row = document.createElement('div');
+                row.className = 'row g-2';
+
+                // 學校選單容器
+                const schoolCol = document.createElement('div');
+                schoolCol.className = 'col-md-6';
+
+                const schoolSelect = document.createElement('select');
+                schoolSelect.className = 'form-select form-select-sm schoolSelect fs-5';
+                schoolSelect.dataset.wish = wishNum;
+                schoolSelect.innerHTML = schoolOptionsHtml;
+                if (selectedSchoolCode) {
+                    schoolSelect.value = selectedSchoolCode;
+                }
                 if (isExpired) {
-                    select.disabled = true;
-                    select.title = '報名已截止';
+                    schoolSelect.disabled = true;
+                    schoolSelect.title = '報名已截止';
+                }
+                schoolCol.appendChild(schoolSelect);
+
+                // 科系選單容器
+                const deptCol = document.createElement('div');
+                deptCol.className = 'col-md-6';
+
+                const deptSelect = document.createElement('select');
+                deptSelect.className = 'form-select form-select-sm departmentChoices fs-5';
+                deptSelect.name = `departmentChoices_${wishNum}`;
+                deptSelect.id = `departmentChoices_${wishNum}`;
+                deptSelect.innerHTML = '<option value="">選擇科系</option>';
+
+                // 如果有已選學校，填入該校科系
+                if (selectedSchoolCode && schoolDepartmentMap[selectedSchoolCode]) {
+                    schoolDepartmentMap[selectedSchoolCode].departments.forEach(dept => {
+                        const opt = document.createElement('option');
+                        opt.value = dept.code;
+                        opt.textContent = dept.name;
+                        if (dept.code === selectedDeptCode) {
+                            opt.selected = true;
+                        }
+                        deptSelect.appendChild(opt);
+                    });
+                } else {
+                    deptSelect.disabled = true;
                 }
 
-                // 建立預設 option
-                const opt0 = document.createElement('option');
-                opt0.value = '';
-                opt0.textContent = '請選擇';
-                select.appendChild(opt0);
-                select.innerHTML += transformChoicesIntoOptions(userSelectedChoices[i], userDepartmentOptions);
+                if (isExpired) {
+                    deptSelect.disabled = true;
+                    deptSelect.title = '報名已截止';
+                }
+                deptCol.appendChild(deptSelect);
 
-                // 組合 div
+                // 組合結構
+                row.appendChild(schoolCol);
+                row.appendChild(deptCol);
                 div.appendChild(label);
-                div.appendChild(select);
+                div.appendChild(row);
 
                 // 插入到 refInput 之後
                 refInput.parentNode.insertBefore(div, refInput.nextSibling);
             }
+
+            // 綁定學校選單變更事件
+            document.querySelectorAll('.schoolSelect').forEach(select => {
+                select.addEventListener('change', function () {
+                    handleSchoolChange(this);
+                });
+            });
 
             document.getElementById('isJoinedSwitch').checked = userIsJoined;
             document.getElementById('isJoinedLabel').textContent = userIsJoined ? '我要參加集體報名' : '我「不」參加集體報名';
