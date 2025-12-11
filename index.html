@@ -578,7 +578,7 @@
             const sortedSchools = Object.entries(schoolDepartmentMap)
                 .sort((a, b) => a[0].localeCompare(b[0])); // 依學校代碼排序
             sortedSchools.forEach(([code, school]) => {
-                schoolOptionsHtml += `<option value="${code}">${code}-${school.name} (可報${school.limit}個)</option>`;
+                schoolOptionsHtml += `<option value="${code}">${code}-${school.name} (可報${school.limit}個科組學程)</option>`;
             });
 
             for (let i = userSelectedChoices.length - 1; i >= 0; i--) {
