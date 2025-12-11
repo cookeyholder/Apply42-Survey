@@ -138,7 +138,7 @@
             border: none;
             color: #656D78;
             font-weight: 600;
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             /* Larger font */
             transition: all 0.3s ease;
         }
@@ -186,7 +186,7 @@
             font-family: 'Arial', sans-serif;
             text-shadow: none;
             position: relative;
-            bottom: 10px;
+            bottom: 8px;
             /* Visual optical adjustment */
         }
 
@@ -761,7 +761,7 @@
         function handleSchoolChange(schoolSelect) {
             const wishIndex = schoolSelect.dataset.wish;
 
-            const deptSelect = document.getElementById(`departmentChoices_${wishIndex} `);
+            const deptSelect = document.getElementById(`departmentChoices_${wishIndex}`);
             const schoolCode = schoolSelect.value;
 
             // 清空並更新科系選單
@@ -776,7 +776,7 @@
                     const opt = document.createElement('option');
                     opt.value = dept.code;
 
-                    opt.textContent = `${dept.code.slice(3)} -${dept.name} `;
+                    opt.textContent = `${dept.code.slice(3)} - ${dept.name}`;
                     deptSelect.appendChild(opt);
                 });
                 deptSelect.disabled = false;
@@ -810,7 +810,7 @@
             const sortedSchools = Object.entries(schoolDepartmentMap).sort((a, b) => a[0].localeCompare(b[0])); // 依學校代碼排序
 
             sortedSchools.forEach(([code, school]) => {
-                schoolOptionsHtml += `< option value = "${code}" > ${code} -${school.name} (可報${school.limit}個科組學程)</option > `;
+                schoolOptionsHtml += `<option value="${code}">${code} - ${school.name} (可報${school.limit}個科組學程)</option>`;
             });
 
             for (let i = userSelectedChoices.length - 1; i >= 0; i--) {
@@ -826,7 +826,7 @@
                 const label = document.createElement('label');
                 label.className = 'form-label';
 
-                label.textContent = `志願 ${wishNum} `;
+                label.textContent = `志願 ${wishNum}`;
 
                 // 建立 row 容器
                 const row = document.createElement('div');
@@ -859,9 +859,9 @@
                 const deptSelect = document.createElement('select');
                 deptSelect.className = 'form-select form-select-sm departmentChoices fs-5';
 
-                deptSelect.name = `departmentChoices_${wishNum} `;
+                deptSelect.name = `departmentChoices_${wishNum}`;
 
-                deptSelect.id = `departmentChoices_${wishNum} `;
+                deptSelect.id = `departmentChoices_${wishNum}`;
                 deptSelect.innerHTML = '<option value="">選擇科系</option>';
 
                 // 如果有已選學校，填入該校科系（依代碼排序）
@@ -872,7 +872,7 @@
                         const opt = document.createElement('option');
                         opt.value = dept.code;
 
-                        opt.textContent = `${dept.code.slice(3)} -${dept.name} `;
+                        opt.textContent = `${dept.code.slice(3)} - ${dept.name}`;
 
                         if (dept.code === selectedDeptCode) {
                             opt.selected = true;
