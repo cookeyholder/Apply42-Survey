@@ -386,8 +386,9 @@
                 button.textContent = '報名已截止';
             });
 
-            // 停用所有志願選擇下拉選單
-            departmentChoices.forEach(select => {
+            // 停用所有志願選擇下拉選單（學校與科系）
+            const allSelects = document.querySelectorAll('.departmentChoices, .schoolSelect');
+            allSelects.forEach(select => {
                 select.disabled = true;
             });
 
