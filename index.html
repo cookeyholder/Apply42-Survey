@@ -11,59 +11,234 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
     <style>
-        .navbar-brand {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #333;
+        /* 引入 Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+        :root {
+            /* 現代柔和配色 */
+            --bs-primary: #5D9CEC;
+            /* 柔和藍 */
+            --bs-primary-rgb: 93, 156, 236;
+            --bs-secondary: #AAB2BD;
+            /* 淺灰 */
+            --bs-success: #48CFAD;
+            /* 薄荷綠 (原為 #4ECDC4 的調整版) */
+            --bs-danger: #FC6E51;
+            /* 珊瑚紅 */
+            --bs-warning: #FFCE54;
+            /* 太陽黃 */
+            --bs-info: #4FC1E9;
+            --bs-light: #F5F7FA;
+            /* 極淡灰背景 */
+            --bs-dark: #434A54;
+            /* 深灰文字 */
+
+            /* 字體設定 */
+            --bs-body-font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+            --bs-body-color: #434A54;
+            --bs-body-bg: #F5F7FA;
         }
 
-        /* 卡片主題邊框及標題色彩 */
+        body {
+            font-family: var(--bs-body-font-family);
+            color: var(--bs-body-color);
+            background-color: var(--bs-body-bg) !important;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: #434A54 !important;
+            font-size: 3rem;
+            text-align: center;
+            /* Larger font */
+        }
+
+        /* 現代化卡片樣式：移除左側粗框，改用頂部強調或純淨風格 */
         .card {
-            border-left: 5px solid #FF6B6B;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            /* 柔和基礎陰影 */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background-color: #FFFFFF;
+            overflow: hidden;
+            /* 確保圓角內容不溢出 */
+        }
+
+        /* 卡片頂部裝飾線 (可選，保持一點品牌色) */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--bs-primary), var(--bs-success));
+            opacity: 0.8;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            /* 懸停浮起 */
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+            /* 加深陰影 */
         }
 
         .card-title {
-            color: #FF6B6B;
+            color: var(--bs-dark);
+            font-weight: 700;
         }
 
-        /* 主要按鈕改為清新綠 */
+        /* 現代化按鈕樣式 */
+        .btn {
+            border-radius: 8px;
+            /* 更圓潤 */
+            font-weight: 500;
+            padding: 0.5rem 1.2rem;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
         .btn-primary {
-            background-color: #4ECDC4;
-            border-color: #4ECDC4;
+            background-color: var(--bs-primary);
+            border-color: var(--bs-primary);
         }
 
         .btn-primary:hover {
-            background-color: #38B2A4;
-            border-color: #38B2A4;
+            background-color: #4A89DC;
+            /* 深一點的藍 */
+            border-color: #4A89DC;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(93, 156, 236, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        /* 表單樣式優化 */
+        .form-control,
+        .form-select {
+            border-radius: 8px;
+            border: 1px solid #CCD1D9;
+            padding: 0.6rem 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.25rem rgba(93, 156, 236, 0.15);
+            /* 柔和光暈 */
+        }
+
+        /* 針對特定元素的微調 */
+        .nav-tabs .nav-link {
+            border: none;
+            color: #656D78;
+            font-weight: 600;
+            font-size: 1.5rem;
+            /* Larger font */
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: var(--bs-primary);
+            background-color: rgba(93, 156, 236, 0.05);
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--bs-primary);
+            border-bottom: 3px solid var(--bs-primary);
+            background-color: transparent;
+        }
+
+        /* Redesigned Text-Only Countdown */
+        .countdown-container {
+            display: inline-flex;
+            gap: 1.2rem;
+            align-items: center;
+            vertical-align: middle;
+        }
+
+        .countdown-item {
+            display: inline-flex;
+            flex-direction: row;
+            align-items: center;
+            background: none;
+            padding: 0;
+            border: none;
+            box-shadow: none;
+            min-width: auto;
+        }
+
+        .countdown-item::before {
+            content: none;
+        }
+
+        .countdown-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #dc3545;
+            /* Red */
+            line-height: 1;
+            font-family: 'Arial', sans-serif;
+            text-shadow: none;
+            position: relative;
+            bottom: 8px;
+            /* Visual optical adjustment */
+        }
+
+        .countdown-label {
+            font-size: 1rem;
+            color: #495057;
+            font-weight: 600;
+            margin-left: 0.3rem;
+            text-transform: none;
+        }
+
+        .wish-row {
+            background-color: #F8F9FA;
+            /* 區隔每個志願區塊 */
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #E6E9ED;
+            transition: background-color 0.3s ease;
+        }
+
+        .wish-row:hover {
+            background-color: #FFFFFF;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            border-color: var(--bs-primary);
         }
     </style>
+
+
+
 </head>
 
 <body class="bg-light">
-    <nav class="navbar navbar-expand-lg shadow-sm">
-        <div class="container-fluid px-2 px-md-4">
-            <a class="navbar-brand" id="navbarBrand" href="#"></a>
-        </div>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid px-2 px-md-4 justify-content-center"><a class="navbar-brand" id="navbarBrand"
+                href="#"></a></div>
     </nav>
-
     <div class="container-fluid my-4 px-2 px-md-4">
         <ul class="nav nav-tabs" id="mainTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="survey-tab" data-bs-toggle="tab" data-bs-target="#survey-tab-pane"
-                    type="button" role="tab" aria-controls="survey-tab-pane" aria-selected="true">志願填報</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats-tab-pane"
-                    type="button" role="tab" aria-controls="stats-tab-pane" aria-selected="false">各志願選填人數統計</button>
-            </li>
+            <li class="nav-item" role="presentation"><button class="nav-link active" id="survey-tab"
+                    data-bs-toggle="tab" data-bs-target="#survey-tab-pane" type="button" role="tab"
+                    aria-controls="survey-tab-pane" aria-selected="true">志願填報</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="stats-tab" data-bs-toggle="tab"
+                    data-bs-target="#stats-tab-pane" type="button" role="tab" aria-controls="stats-tab-pane"
+                    aria-selected="false">各志願選填人數統計</button></li>
         </ul>
         <div class="tab-content" id="mainTabsContent">
             <div class="tab-pane fade show active" id="survey-tab-pane" role="tabpanel" aria-labelledby="survey-tab"
                 tabindex="0">
                 <!-- 使用者資訊卡片 -->
-                <div class="card shadow fs-4 mb-3">
+                <div class="card fs-4 mb-3">
                     <div class="card-body">
-                        <!-- <h5 class="card-title text-center">使用者資訊</h5> -->
+                        <!-- <h5 class="card-title text-center">使用者資訊</h5>-->
                         <div class="row text-center mt-3">
                             <div class="col-12 col-sm-6 col-md mb-3">
                                 <div class="text-muted">班級</div>
@@ -88,16 +263,24 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- 說明文字卡片 -->
-                <div class="card shadow fs-4 mb-3">
+                <div class="card fs-4 mb-3">
                     <div class="card-body">
-                        <!-- <h5 class="card-title text-center">說明</h5> -->
+                        <!-- <h5 class="card-title text-center">說明</h5>-->
                         <div class="row mt-3">
                             <div class="col-12">
-                                <p>
-                                    說明及注意事項：<span id="countdownTimer"></span>
-                                </p>
+                                <div
+                                    class="d-flex flex-wrap align-items-center gap-3 mb-3 p-3 bg-white rounded shadow-sm border-start border-5 border-primary">
+                                    <div class="fw-bold fs-4 text-dark m-0 d-flex align-items-center">
+                                        <i class="bi bi-info-circle-fill me-2 text-primary"></i>
+                                        說明及注意事項：
+                                    </div>
+                                    <div class="d-flex align-items-center ms-auto ms-md-0">
+                                        <span id="countdownLabel"
+                                            class="fs-5 fw-bold text-secondary me-3">距離報名截止還有</span>
+                                        <div id="countdownTimer"></div>
+                                    </div>
+                                </div>
                                 <ol id="notificationsList">
                                     <!-- 通知將由 JavaScript 動態填入 -->
                                 </ol>
@@ -105,42 +288,35 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- 是否參加集體報名卡片 -->
-                <div id="isJoinedCard" class="card shadow fs-4 mb-3">
+                <div id="isJoinedCard" class="card fs-4 mb-3">
                     <div class="card-body">
-                        <!-- <h5 class="card-title text-center">是否參加集體報名</h5> -->
+                        <!-- <h5 class="card-title text-center">是否參加集體報名</h5>-->
                         <form id="isJoinedForm" method="POST" action="#">
                             <!-- 改用 switch -->
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="isJoinedSwitch"
-                                    name="isJoinedInput">
-                                <label class="form-check-label" for="isJoinedSwitch">
-                                    <span id="isJoinedLabel">我「不」參加集體報名</span>
-                                </label>
-                            </div>
-                            <button type="submit" form="isJoinedForm" class="btn btn-primary">
-                                送出參加集體報名意願
+                            <div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox"
+                                    id="isJoinedSwitch" name="isJoinedInput"><label class="form-check-label"
+                                    for="isJoinedSwitch"><span id="isJoinedLabel">我「不」參加集體報名</span></label></div><button
+                                type="submit" form="isJoinedForm" class="btn btn-primary">送出參加集體報名意願
                             </button>
                         </form>
                     </div>
                 </div>
-
                 <!-- 志願選擇卡片 -->
-                <div id="departmentChoicesCard" class="card shadow fs-4 mb-3">
+                <div id="departmentChoicesCard" class="card fs-4 mb-3">
                     <div class="card-body">
                         <form id="departmentChoicesForm" method="POST" action="#">
-                            <!-- 新增隱藏欄位，同步 switch 值 -->
-                            <input type="hidden" id="isJoinedInput" name="isJoinedInput" value="否" />
-
-                            <div>報名費用： <span id="registrationFee"></span> 元。
-                                <ul>
+                            <!-- 新增隱藏欄位，同步 switch 值 --><input type="hidden" id="isJoinedInput" name="isJoinedInput"
+                                value="否" />
+                            <div>報名費用： <span id="registrationFee"></span>元。 <ul>
                                     <li>審查費 200 元，每報名一個志願 100 元。</li>
                                     <li>低收入戶考生報名費全免，中低收入戶考生報名費減免60%</li>
                                 </ul>
                             </div>
-
-                            <div class="d-grid">
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-outline-secondary" onclick="clearAllChoices()">
+                                    清除所有志願
+                                </button>
                                 <button type="submit" form="departmentChoicesForm" class="btn btn-primary btn-lg">
                                     確定送出報名意願和志願選擇
                                 </button>
@@ -153,18 +329,15 @@
                 <div class="container pt-3">
                     <h1 class="mb-4 text-center">各志願選填統計結果</h1>
                     <div id="loadingMessageStats">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">載入中...</span>
-                        </div>
+                        <div class="spinner-border text-primary" role="status"><span
+                                class="visually-hidden">載入中...</span></div>
                         <p>正在載入統計資料，請稍候...</p>
                     </div>
-                    <div class="mb-3">
-                        <label for="groupFilterStats" class="form-label">統測報考群(類)：</label>
-                        <select id="groupFilterStats" class="form-select">
+                    <div class="mb-3"><label for="groupFilterStats" class="form-label">統測報考群(類)：</label><select
+                            id="groupFilterStats" class="form-select">
                             <option value="">所有群(類)</option>
                             <!-- 群(類)選項將由 JavaScript 動態填入 -->
-                        </select>
-                    </div>
+                        </select></div>
                     <div id="statisticsResultStats" class="mt-4">
                         <!-- 統計結果將顯示於此 -->
                     </div>
@@ -173,41 +346,46 @@
             </div>
         </div>
     </div>
-
     <!-- 報名截止 Modal -->
     <div class="modal fade" id="expiredModal" tabindex="-1" aria-labelledby="expiredModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="expiredModalLabel">系統通知</h5>
-                    <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> -->
+                    <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                            </button>-->
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning text-center" role="alert">
-                        <h5 class="alert-heading text-danger">
-                            <strong>報名已截止囉！</strong>
-                        </h5>
-                        <p>請點擊下方連結重新載入頁面：</p>
-                        <a href="#" id="expiredModalLink" target="_top" class="btn btn-primary">
-                            重新載入報名系統
-                        </a>
+                        <h5 class="alert-heading text-danger"><strong>報名已截止囉！</strong></h5>
+                        <p>請點擊下方連結重新載入頁面：</p><a href="#" id="expiredModalLink" target="_top"
+                            class="btn btn-primary">重新載入報名系統 </a>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button> -->
+                    <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>-->
                 </div>
             </div>
         </div>
     </div>
-
-    <footer class="text-center py-4 text-muted px-2">
-        © <span id="footerText"></span>
-    </footer>
-
-    <script>
-        // 解析後端傳過來的 JSON 資料
+    <footer class="text-center py-4 text-muted px-2">© <span id="footerText"></span></footer>
+    <script> // 解析後端傳過來的 JSON 資料
         const pageData = JSON.parse('<?= pageData ?>');
-        const { user, configs, notifications, limitOfSchools, isJoined, selectedChoices, departmentOptions, loginEmail, serviceUrl, wishesReceivedMessage } = pageData;
+
+        const {
+            user,
+            configs,
+            notifications,
+            limitOfSchools,
+            isJoined,
+            selectedChoices,
+            departmentOptions,
+            loginEmail,
+            serviceUrl,
+            wishesReceivedMessage
+        }
+
+            = pageData;
 
         // 記錄網頁載入時是否已經截止
         let wasExpiredOnLoad = false;
@@ -235,18 +413,33 @@
                 endTimeBox.innerHTML = formatDateTime(endTime);
             }
 
+            let timerHtml = '';
+
             if (hours > 0) {
-                countdownTimer.innerHTML = `<strong class="text-danger">距離截止時間還有 ${hours} 小時 ${minutes} 分鐘 ${seconds} 秒</strong>`;
-            } else if (minutes > 0) {
-                countdownTimer.innerHTML = `<strong class="text-danger">距離截止時間還有 ${minutes} 分鐘 ${seconds} 秒</strong>`;
-            } else {
-                countdownTimer.innerHTML = `<strong class="text-danger">距離截止時間還有 ${seconds} 秒</strong>`;
+                timerHtml += `
+                    <div class="countdown-item">
+                        <span class="countdown-value">${hours}</span>
+                        <span class="countdown-label">時</span>
+                    </div>`;
             }
+
+            timerHtml += `
+                <div class="countdown-item">
+                    <span class="countdown-value">${minutes}</span>
+                    <span class="countdown-label">分</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-value">${seconds}</span>
+                    <span class="countdown-label">秒</span>
+                </div>`;
+
+            countdownTimer.innerHTML = `<div class="countdown-container">${timerHtml}</div>`;
 
             if (timeLeft <= 0) {
                 stopElementsOfForms();
             }
         }
+
         const timerInterval = setInterval(updateCountdown, 1000);
 
 
@@ -270,18 +463,19 @@
                 button.textContent = '報名已截止';
             });
 
-            // 停用所有志願選擇下拉選單
-            departmentChoices.forEach(select => {
+            // 停用所有志願選擇下拉選單（學校與科系）
+            const allSelects = document.querySelectorAll('.departmentChoices, .schoolSelect');
+            allSelects.forEach(select => {
                 select.disabled = true;
             });
 
-            countdownTimer.innerHTML = `
-                                <div class="alert alert-warning text-center" role="alert">
-                                    <h5 class="alert-heading text-danger">
-                                        <strong>報名經已截止囉！</strong>
-                                    </h5>
-                                </div>
-                            `;
+            // 隱藏「距離報名截止還有」文字
+            const countdownLabel = document.getElementById('countdownLabel');
+            if (countdownLabel) {
+                countdownLabel.style.display = 'none';
+            }
+
+            countdownTimer.innerHTML = ` <div class="alert alert-warning text-center" role="alert"><h5 class="alert-heading text-danger"><strong>報名已經截止囉！</strong></h5></div>`;
 
             // 只有在載入時未截止，但現在截止的情況下，才顯示 modal 和開啟新分頁
             if (!wasExpiredOnLoad) {
@@ -295,6 +489,7 @@
 
             // 更新 modal 中的連結
             const modalLink = document.querySelector('#expiredModal .btn-primary');
+
             if (modalLink) {
                 modalLink.href = serviceUrl;
             }
@@ -306,12 +501,18 @@
 
         function formatDateTime(date) {
             const padZero = num => num.toString().padStart(2, '0');
-            const yyyy = date.getFullYear() - 1911;              // 民國年
-            const mm = padZero(date.getMonth() + 1);    // 月 (0-based 要 +1)
-            const dd = padZero(date.getDate());         // 日
-            const hh = padZero(date.getHours());        // 時
-            const MM = padZero(date.getMinutes());      // 分
-            const weekDay = ['日', '一', '二', '三', '四', '五', '六'][date.getDay()];  // 星期幾
+            const yyyy = date.getFullYear() - 1911; // 民國年
+            const mm = padZero(date.getMonth() + 1); // 月 (0-based 要 +1)
+            const dd = padZero(date.getDate()); // 日
+            const hh = padZero(date.getHours()); // 時
+            const MM = padZero(date.getMinutes()); // 分
+            const weekDay = ['日',
+                '一',
+                '二',
+                '三',
+                '四',
+                '五',
+                '六'][date.getDay()]; // 星期幾
 
             return `${yyyy} 年 ${mm} 月 ${dd} 日(星期${weekDay}) ${hh} 時 ${MM} 分`;
         }
@@ -353,9 +554,11 @@
         function initializePageData() {
             // 導航列
             const navBrand = document.getElementById('navbarBrand');
+
             if (navBrand) {
                 navBrand.href = serviceUrl;
-                navBrand.textContent = configs['系統名稱'] || '';
+                // navBrand.textContent = configs['系統名稱'] || '';
+                navBrand.innerHTML = configs['學校名稱'] + '<br>' + configs['系統名稱'] || '';
             }
 
             // 使用者資訊
@@ -367,14 +570,18 @@
 
             // 通知列表
             const notificationsList = document.getElementById('notificationsList');
+
             if (notificationsList) {
                 let notificationsHtml = '';
+
                 if (wishesReceivedMessage) {
                     notificationsHtml += wishesReceivedMessage;
                 }
+
                 if (notifications) {
                     notificationsHtml += notifications;
                 }
+
                 notificationsList.innerHTML = notificationsHtml;
             }
 
@@ -384,12 +591,14 @@
 
             // Modal 連結
             const expiredModalLink = document.getElementById('expiredModalLink');
+
             if (expiredModalLink) {
                 expiredModalLink.href = serviceUrl;
             }
 
             // 頁尾
             const footerText = document.getElementById('footerText');
+
             if (footerText) {
                 footerText.textContent = configs['系統名稱'] || '';
             }
@@ -397,18 +606,18 @@
 
         // 統計頁籤延遲載入：切換頁籤時才載入
         let statsLoaded = false;
+
         document.getElementById('stats-tab').addEventListener('shown.bs.tab', function () {
             if (!statsLoaded) {
                 statsLoaded = true;
-                google.script.run
-                    .withSuccessHandler(populateGroupFilterStats)
-                    .withFailureHandler(function (error) { console.error('載入群類失敗:', error); })
-                    .getUniqueGroupNames();
 
-                google.script.run
-                    .withSuccessHandler(displayStats)
-                    .withFailureHandler(function (error) { console.error('載入統計失敗:', error); })
-                    .getRawStatisticsData();
+                google.script.run.withSuccessHandler(populateGroupFilterStats).withFailureHandler(function (error) {
+                    console.error('載入群類失敗:', error);
+                }).getUniqueGroupNames();
+
+                google.script.run.withSuccessHandler(displayStats).withFailureHandler(function (error) {
+                    console.error('載入統計失敗:', error);
+                }).getRawStatisticsData();
             }
         });
 
@@ -427,8 +636,7 @@
             const btn = document.querySelector('#departmentChoicesForm button[type="submit"]');
             if (!btn) return; // 如果找不到按鈕就直接返回
 
-            const allEmpty = Array.from(document.querySelectorAll('.departmentChoices'))
-                .every(el => el.value === '' || el.value === '0');
+            const allEmpty = Array.from(document.querySelectorAll('.departmentChoices')).every(el => el.value === '' || el.value === '0');
 
             // 檢查是否已過期
             const endTime = new Date(configs['系統關閉時間']);
@@ -457,7 +665,9 @@
             if (allEmpty) {
                 btn.disabled = true;
                 btn.textContent = '請至少選擇一個志願';
-            } else {
+            }
+
+            else {
                 btn.disabled = false;
                 btn.textContent = '確定送出報名意願和志願選擇';
             }
@@ -466,14 +676,18 @@
         // 將後端傳來的校系志願列表轉換為下拉選單的選項
         function transformChoicesIntoOptions(selectedChoice, choices) {
             selectedChoice = selectedChoice.toString().trim();
+
             const groups = choices.reduce((acc, choice) => {
                 const label = getSchoolFromChoice(choice);
                 if (!acc[label]) acc[label] = [];
                 acc[label].push(choice);
                 return acc;
-            }, {});
+            }
+
+                , {});
 
             let optionsHtml = '';
+
             for (const label in groups) {
                 optionsHtml += `<optgroup label="${label}">`;
 
@@ -482,11 +696,13 @@
                     const choiceString = choice.match(/^(.*?)(?=\(該校可報志願數)/)[0].toString();
                     // 若與 selectedChoice 相符，加入 selected 屬性
                     const isSelected = choiceCode === selectedChoice ? ' selected' : '';
-                    optionsHtml += `<option value="${choiceCode}"${isSelected}>${choiceString}</option>`;
+
+                    optionsHtml += `<option value="${choiceCode}" ${isSelected}>${choiceString}</option>`;
                 });
 
                 optionsHtml += `</optgroup>`;
             }
+
             return optionsHtml;
         }
 
@@ -494,16 +710,20 @@
         function getSchoolFromChoice(choice) {
             const matchSchool = choice.match(/-(.*?)_/);
             const departmentLimits = choice.toString().slice(-2, -1);
+
             if (matchSchool) {
                 return matchSchool[1] + '(可報志願數：' + departmentLimits + ')';
             }
+
             return null;
         }
 
         // 建立學校->科系對照表
         let schoolDepartmentMap = {};
+
         function buildSchoolDepartmentMap(options) {
             schoolDepartmentMap = {};
+
             options.forEach(choice => {
                 // 解析選項格式: "011001-國立臺灣科技大學_機械工程系(該校可報志願數...)"
                 const code = choice.slice(0, 6);
@@ -518,8 +738,11 @@
                             name: matchSchool[1],
                             limit: departmentLimits,
                             departments: []
-                        };
+                        }
+
+                            ;
                     }
+
                     schoolDepartmentMap[schoolCode].departments.push({
                         code: code,
                         name: matchDept[1],
@@ -533,6 +756,7 @@
         // 處理學校選擇變更
         function handleSchoolChange(schoolSelect) {
             const wishIndex = schoolSelect.dataset.wish;
+
             const deptSelect = document.getElementById(`departmentChoices_${wishIndex}`);
             const schoolCode = schoolSelect.value;
 
@@ -543,14 +767,18 @@
                 const school = schoolDepartmentMap[schoolCode];
                 // 依科系代碼排序（後3碼）
                 const sortedDepts = [...school.departments].sort((a, b) => a.code.localeCompare(b.code));
+
                 sortedDepts.forEach(dept => {
                     const opt = document.createElement('option');
                     opt.value = dept.code;
-                    opt.textContent = `${dept.code.slice(3)}-${dept.name}`;
+
+                    opt.textContent = `${dept.code.slice(3)} - ${dept.name}`;
                     deptSelect.appendChild(opt);
                 });
                 deptSelect.disabled = false;
-            } else {
+            }
+
+            else {
                 deptSelect.disabled = true;
             }
 
@@ -575,10 +803,10 @@
 
             // 建立學校選項 HTML（依學校代碼排序）
             let schoolOptionsHtml = '<option value="">選擇學校</option>';
-            const sortedSchools = Object.entries(schoolDepartmentMap)
-                .sort((a, b) => a[0].localeCompare(b[0])); // 依學校代碼排序
+            const sortedSchools = Object.entries(schoolDepartmentMap).sort((a, b) => a[0].localeCompare(b[0])); // 依學校代碼排序
+
             sortedSchools.forEach(([code, school]) => {
-                schoolOptionsHtml += `<option value="${code}">${code}-${school.name} (可報${school.limit}個科組學程)</option>`;
+                schoolOptionsHtml += `<option value="${code}">${code} - ${school.name} (可報${school.limit}個科組學程)</option>`;
             });
 
             for (let i = userSelectedChoices.length - 1; i >= 0; i--) {
@@ -593,6 +821,7 @@
                 // 建立 label
                 const label = document.createElement('label');
                 label.className = 'form-label';
+
                 label.textContent = `志願 ${wishNum}`;
 
                 // 建立 row 容器
@@ -607,13 +836,16 @@
                 schoolSelect.className = 'form-select form-select-sm schoolSelect fs-5';
                 schoolSelect.dataset.wish = wishNum;
                 schoolSelect.innerHTML = schoolOptionsHtml;
+
                 if (selectedSchoolCode) {
                     schoolSelect.value = selectedSchoolCode;
                 }
+
                 if (isExpired) {
                     schoolSelect.disabled = true;
                     schoolSelect.title = '報名已截止';
                 }
+
                 schoolCol.appendChild(schoolSelect);
 
                 // 科系選單容器
@@ -622,24 +854,31 @@
 
                 const deptSelect = document.createElement('select');
                 deptSelect.className = 'form-select form-select-sm departmentChoices fs-5';
+
                 deptSelect.name = `departmentChoices_${wishNum}`;
+
                 deptSelect.id = `departmentChoices_${wishNum}`;
                 deptSelect.innerHTML = '<option value="">選擇科系</option>';
 
                 // 如果有已選學校，填入該校科系（依代碼排序）
                 if (selectedSchoolCode && schoolDepartmentMap[selectedSchoolCode]) {
-                    const sortedDepts = [...schoolDepartmentMap[selectedSchoolCode].departments]
-                        .sort((a, b) => a.code.localeCompare(b.code));
+                    const sortedDepts = [...schoolDepartmentMap[selectedSchoolCode].departments].sort((a, b) => a.code.localeCompare(b.code));
+
                     sortedDepts.forEach(dept => {
                         const opt = document.createElement('option');
                         opt.value = dept.code;
-                        opt.textContent = `${dept.code.slice(3)}-${dept.name}`;
+
+                        opt.textContent = `${dept.code.slice(3)} - ${dept.name}`;
+
                         if (dept.code === selectedDeptCode) {
                             opt.selected = true;
                         }
+
                         deptSelect.appendChild(opt);
                     });
-                } else {
+                }
+
+                else {
                     deptSelect.disabled = true;
                 }
 
@@ -647,6 +886,7 @@
                     deptSelect.disabled = true;
                     deptSelect.title = '報名已截止';
                 }
+
                 deptCol.appendChild(deptSelect);
 
                 // 組合結構
@@ -673,6 +913,7 @@
             document.getElementById('isJoinedForm').querySelector('button[type="submit"]').style.display = userIsJoined ? 'none' : '';
 
             const isJoinedSwitch = document.getElementById('isJoinedSwitch');
+
             // 如果已過期，同時停用 switch
             if (isExpired && isJoinedSwitch) {
                 isJoinedSwitch.disabled = true;
@@ -687,23 +928,30 @@
         function updateRegistrationFee() {
             const joined = document.getElementById('isJoinedSwitch').checked;
             const incomeType = user['繳費身分'] || '';
-            const numberSelectedChoices = Array.from(document.querySelectorAll('.departmentChoices'))
-                .filter(el => el.value !== '' && el.value !== '0').length;
+            const numberSelectedChoices = Array.from(document.querySelectorAll('.departmentChoices')).filter(el => el.value !== '' && el.value !== '0').length;
             let fee = 0;
 
-            if (joined) { // 參加集體報名
+            if (joined) {
+
+                // 參加集體報名
                 if (numberSelectedChoices > 0) {
                     fee = 200 + (numberSelectedChoices * 100); // 審查費 + 志願費用
                 }
-            } else { // 不參加集體報名
+            }
+
+            else {
+                // 不參加集體報名
                 fee = 0;
             }
 
             if (incomeType === '低收入戶' || numberSelectedChoices === 0) {
                 fee = 0;
-            } else if (incomeType === '中低收入戶') {
+            }
+
+            else if (incomeType === '中低收入戶') {
                 fee = Math.round(fee * 0.4);
             }
+
             document.getElementById('registrationFee').textContent = fee;
         }
 
@@ -713,31 +961,54 @@
         });
 
         // 提交表單前檢查：若參加集體報名且無任何志願，阻止送出
-        document.getElementById('departmentChoicesForm')
-            .addEventListener('submit', function (e) {
-                const isJoined = document.getElementById('isJoinedSwitch').checked;
-                const allEmpty = Array.from(
-                    document.querySelectorAll('.departmentChoices')
-                ).every(el => el.value === '');
+        document.getElementById('departmentChoicesForm').addEventListener('submit', function (e) {
+            const isJoined = document.getElementById('isJoinedSwitch').checked;
+            const allEmpty = Array.from(document.querySelectorAll('.departmentChoices')).every(el => el.value === '');
 
-                if (isJoined && allEmpty) {
-                    e.preventDefault();
-                    alert('請至少選擇一個志願！');
-                }
-            });
+            if (isJoined && allEmpty) {
+                e.preventDefault();
+                alert('請至少選擇一個志願！');
+            }
+        });
 
         // 檢查志願是否重複，並將最後改變的志願重設
+        // 清除所有志願
+        function clearAllChoices() {
+            if (!confirm('確定要清除所有已選的志願嗎？')) {
+                return;
+            }
+
+            // 重設學校選單
+            document.querySelectorAll('.schoolSelect').forEach(select => {
+                select.value = '';
+            });
+
+            // 重設科系選單
+            document.querySelectorAll('.departmentChoices').forEach(select => {
+                select.value = '';
+                select.innerHTML = '<option value="">選擇科系</option>';
+                select.disabled = true;
+            });
+
+            updateRegistrationFee();
+            updateDepartmentSubmitBtnState();
+        }
+
         function checkDuplicateChoices(changedEl) {
-            const vals = Array.from(document.querySelectorAll('.departmentChoices'))
-                .map(function (el) { return el.value; })
-                .filter(v => v !== '' && v !== '0');  // 排除未選擇
+            const vals = Array.from(document.querySelectorAll('.departmentChoices')).map(function (el) {
+                return el.value;
+            }).filter(v => v !== '' && v !== '0'); // 排除未選擇
+
             if (new Set(vals).size !== vals.length) {
                 alert('志願不可重複，請重新檢查！');
+
                 if (changedEl) {
                     changedEl.selectedIndex = 0;
                 }
+
                 return true;
             }
+
             return false;
         }
 
@@ -750,11 +1021,13 @@
                 return false;
             }
 
-            const departmentChoices = Array.from(document.querySelectorAll('.departmentChoices'))
-                .map(function (el) { return el.value; })
-                .filter(v => v !== '' && v !== '0'); // 排除未選擇
+            const departmentChoices = Array.from(document.querySelectorAll('.departmentChoices')).map(function (el) {
+                return el.value;
+            }).filter(v => v !== '' && v !== '0'); // 排除未選擇
 
-            const counts = {};
+            const counts = {}
+
+                ;
 
             departmentChoices.forEach(choice => {
                 if (choice && choice.length >= 3) {
@@ -768,14 +1041,18 @@
                     if (changedEl) {
                         changedEl.selectedIndex = 0;
                     }
+
                     alert(`${schoolLimits[schoolCode].schoolName}最多可選 ${schoolLimits[schoolCode].limitsOfSchool} 個志願，請重新選擇！`);
                     return true;
                 }
             }
+
             return false;
         }
 
-        let rawDataStats = {};
+        let rawDataStats = {}
+
+            ;
 
         function populateGroupFilterStats(data) {
             if (data && data.error) {
@@ -803,17 +1080,22 @@
 
         function displayStats(data) {
             const loadingMsg = document.getElementById('loadingMessageStats');
+
             if (loadingMsg) {
                 loadingMsg.style.display = 'none';
             }
 
             if (data && data.error) {
-                displayErrorStats({ message: data.error });
+                displayErrorStats({
+                    message: data.error
+                });
                 return;
             }
 
             // 依照 data keys(類群代碼+類群名稱) 的順序顯示統計資料
-            rawDataStats = {};
+            rawDataStats = {}
+
+                ;
             const groupNames = Object.keys(data).sort();
             groupNames.forEach((groupName) => rawDataStats[groupName] = data[groupName] || []);
             filterAndDisplayStatistics('');
@@ -823,10 +1105,15 @@
             const resultDiv = document.getElementById('statisticsResultStats');
             resultDiv.innerHTML = '';
 
-            const dataToDisplay = {};
+            const dataToDisplay = {}
+
+                ;
+
             if (selectedGroup && rawDataStats[selectedGroup]) {
                 dataToDisplay[selectedGroup] = rawDataStats[selectedGroup];
-            } else if (!selectedGroup) {
+            }
+
+            else if (!selectedGroup) {
                 Object.assign(dataToDisplay, rawDataStats);
             }
 
@@ -839,17 +1126,10 @@
                 const groupData = dataToDisplay[groupName];
                 if (groupData.length === 0) continue;
 
-                let groupHtml = `<div class="group-container card shadow-sm">
-                                        <div class="card-header bg-primary text-white">
-                                            <h2 class="group-title card-title" style="color: white; border-bottom: none; margin-bottom: 0;">${escapeHtmlStats(groupName)}</h2>
-                                        </div>
-                                        <ul class="list-group list-group-flush">`;
+                let groupHtml = `<div class="group-container card"><div class="card-header bg-primary text-white"><h2 class="group-title card-title" style="color: white; border-bottom: none; margin-bottom: 0;">${escapeHtmlStats(groupName)}</h2></div><ul class="list-group list-group-flush">`;
 
                 groupData.forEach(item => {
-                    groupHtml += `<li class="list-group-item">
-                                        <span>${escapeHtmlStats(item.name)}</span>
-                                        <span class="badge bg-secondary rounded-pill count-badge">${item.count} 人</span>
-                                      </li>`;
+                    groupHtml += `<li class="list-group-item"><span>${escapeHtmlStats(item.name)}</span> <span class="badge bg-secondary rounded-pill count-badge">${item.count}人</span></li>`;
                 });
                 groupHtml += `</ul></div>`;
                 resultDiv.innerHTML += groupHtml;
@@ -858,45 +1138,29 @@
 
         function displayErrorStats(error) {
             const loadingMsg = document.getElementById('loadingMessageStats');
+
             if (loadingMsg) {
                 loadingMsg.style.display = 'none';
             }
+
             const errorDiv = document.getElementById('errorMessageStats');
             console.error('統計資料載入錯誤:', error);
 
             const errorMessage = error.message || '未知錯誤';
-            const isPermissionError = errorMessage.includes('權限') || errorMessage.includes('存取'); if (isPermissionError) {
-                errorDiv.innerHTML = `
-                    <div class="alert alert-warning" role="alert">
-                        <h4 class="alert-heading">權限問題</h4>
-                        <p>${errorMessage}</p>
-                        <hr>
-                        <p class="mb-0">
-                            <small class="text-muted">請聯絡系統管理員</small>
-                        </p>
-                    </div>
-                `;
-            } else {
-                errorDiv.innerHTML = `
-                    <div class="alert alert-danger" role="alert">
-                        <h4 class="alert-heading">載入錯誤</h4>
-                        <p>載入統計資料時發生錯誤：${errorMessage}</p>
-                        <hr>
-                        <p class="mb-0">
-                            <small class="text-muted">請聯絡系統管理員</small>
-                        </p>
-                    </div>
-                `;
+            const isPermissionError = errorMessage.includes('權限') || errorMessage.includes('存取');
+
+            if (isPermissionError) {
+                errorDiv.innerHTML = ` < div class="alert alert-warning" role = "alert" ><h4 class="alert-heading">權限問題</h4><p>${errorMessage}</p><hr><p class="mb-0"><small class="text-muted">請聯絡系統管理員</small></p></div>`;
+            }
+
+            else {
+                errorDiv.innerHTML = ` < div class="alert alert-danger" role = "alert" ><h4 class="alert-heading">載入錯誤</h4><p>載入統計資料時發生錯誤：${errorMessage}</p><hr><p class="mb-0"><small class="text-muted">請聯絡系統管理員</small></p></div>`;
             }
         }
 
         function escapeHtmlStats(unsafe) {
             if (typeof unsafe !== 'string') return '';
-            return unsafe
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
+            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
 
@@ -905,12 +1169,14 @@
             try {
                 // 隱藏所有表單
                 const forms = document.querySelectorAll('form');
+
                 forms.forEach(form => {
                     form.style.display = 'none';
                 });
 
                 // 隱藏所有送出按鈕
                 const submitButtons = document.querySelectorAll('button[type="submit"]');
+
                 submitButtons.forEach(button => {
                     button.style.display = 'none';
                 });
@@ -928,10 +1194,13 @@
                 }
 
                 console.log('已隱藏所有表單和送出按鈕');
-            } catch (error) {
+            }
+
+            catch (error) {
                 console.error('隱藏表單和按鈕時發生錯誤:', error);
             }
         }
+
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
