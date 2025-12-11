@@ -10,143 +10,159 @@
     <title>四技二專甄選入學志願調查系統</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-    /* 引入 Google Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+    <style>
+        /* 引入 Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
 
-    :root {
-    /* 現代柔和配色 */
-    --bs-primary: #5D9CEC; /* 柔和藍 */
-    --bs-primary-rgb: 93, 156, 236;
-    --bs-secondary: #AAB2BD; /* 淺灰 */
-    --bs-success: #48CFAD; /* 薄荷綠 (原為 #4ECDC4 的調整版) */
-    --bs-danger: #FC6E51; /* 珊瑚紅 */
-    --bs-warning: #FFCE54; /* 太陽黃 */
-    --bs-info: #4FC1E9;
-    --bs-light: #F5F7FA; /* 極淡灰背景 */
-    --bs-dark: #434A54; /* 深灰文字 */
+        :root {
+            /* 現代柔和配色 */
+            --bs-primary: #5D9CEC;
+            /* 柔和藍 */
+            --bs-primary-rgb: 93, 156, 236;
+            --bs-secondary: #AAB2BD;
+            /* 淺灰 */
+            --bs-success: #48CFAD;
+            /* 薄荷綠 (原為 #4ECDC4 的調整版) */
+            --bs-danger: #FC6E51;
+            /* 珊瑚紅 */
+            --bs-warning: #FFCE54;
+            /* 太陽黃 */
+            --bs-info: #4FC1E9;
+            --bs-light: #F5F7FA;
+            /* 極淡灰背景 */
+            --bs-dark: #434A54;
+            /* 深灰文字 */
 
-    /* 字體設定 */
-    --bs-body-font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
-    --bs-body-color: #434A54;
-    --bs-body-bg: #F5F7FA;
-    }
+            /* 字體設定 */
+            --bs-body-font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+            --bs-body-color: #434A54;
+            --bs-body-bg: #F5F7FA;
+        }
 
-    body {
-    font-family: var(--bs-body-font-family);
-    color: var(--bs-body-color);
-    background-color: var(--bs-body-bg) !important;
-    }
+        body {
+            font-family: var(--bs-body-font-family);
+            color: var(--bs-body-color);
+            background-color: var(--bs-body-bg) !important;
+        }
 
-    .navbar-brand {
-    font-weight: 700;
-    color: #434A54 !important;
-    }
+        .navbar-brand {
+            font-weight: 700;
+            color: #434A54 !important;
+        }
 
-    /* 現代化卡片樣式：移除左側粗框，改用頂部強調或純淨風格 */
-    .card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* 柔和基礎陰影 */
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    background-color: #FFFFFF;
-    overflow: hidden; /* 確保圓角內容不溢出 */
-    }
+        /* 現代化卡片樣式：移除左側粗框，改用頂部強調或純淨風格 */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            /* 柔和基礎陰影 */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background-color: #FFFFFF;
+            overflow: hidden;
+            /* 確保圓角內容不溢出 */
+        }
 
-    /* 卡片頂部裝飾線 (可選，保持一點品牌色) */
-    .card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, var(--bs-primary), var(--bs-success));
-    opacity: 0.8;
-    }
+        /* 卡片頂部裝飾線 (可選，保持一點品牌色) */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--bs-primary), var(--bs-success));
+            opacity: 0.8;
+        }
 
-    .card:hover {
-    transform: translateY(-5px); /* 懸停浮起 */
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1); /* 加深陰影 */
-    }
+        .card:hover {
+            transform: translateY(-5px);
+            /* 懸停浮起 */
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+            /* 加深陰影 */
+        }
 
-    .card-title {
-    color: var(--bs-dark);
-    font-weight: 700;
-    }
+        .card-title {
+            color: var(--bs-dark);
+            font-weight: 700;
+        }
 
-    /* 現代化按鈕樣式 */
-    .btn {
-    border-radius: 8px; /* 更圓潤 */
-    font-weight: 500;
-    padding: 0.5rem 1.2rem;
-    transition: all 0.25s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
+        /* 現代化按鈕樣式 */
+        .btn {
+            border-radius: 8px;
+            /* 更圓潤 */
+            font-weight: 500;
+            padding: 0.5rem 1.2rem;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
 
-    .btn-primary {
-    background-color: var(--bs-primary);
-    border-color: var(--bs-primary);
-    }
+        .btn-primary {
+            background-color: var(--bs-primary);
+            border-color: var(--bs-primary);
+        }
 
-    .btn-primary:hover {
-    background-color: #4A89DC; /* 深一點的藍 */
-    border-color: #4A89DC;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(93, 156, 236, 0.4);
-    }
+        .btn-primary:hover {
+            background-color: #4A89DC;
+            /* 深一點的藍 */
+            border-color: #4A89DC;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(93, 156, 236, 0.4);
+        }
 
-    .btn-primary:active {
-    transform: translateY(0);
-    box-shadow: none;
-    }
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
 
-    /* 表單樣式優化 */
-    .form-control, .form-select {
-    border-radius: 8px;
-    border: 1px solid #CCD1D9;
-    padding: 0.6rem 0.8rem;
-    transition: all 0.3s ease;
-    }
+        /* 表單樣式優化 */
+        .form-control,
+        .form-select {
+            border-radius: 8px;
+            border: 1px solid #CCD1D9;
+            padding: 0.6rem 0.8rem;
+            transition: all 0.3s ease;
+        }
 
-    .form-control:focus, .form-select:focus {
-    border-color: var(--bs-primary);
-    box-shadow: 0 0 0 0.25rem rgba(93, 156, 236, 0.15); /* 柔和光暈 */
-    }
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.25rem rgba(93, 156, 236, 0.15);
+            /* 柔和光暈 */
+        }
 
-    /* 針對特定元素的微調 */
-    .nav-tabs .nav-link {
-    border: none;
-    color: #656D78;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    }
+        /* 針對特定元素的微調 */
+        .nav-tabs .nav-link {
+            border: none;
+            color: #656D78;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
 
-    .nav-tabs .nav-link:hover {
-    color: var(--bs-primary);
-    background-color: rgba(93, 156, 236, 0.05);
-    }
+        .nav-tabs .nav-link:hover {
+            color: var(--bs-primary);
+            background-color: rgba(93, 156, 236, 0.05);
+        }
 
-    .nav-tabs .nav-link.active {
-    color: var(--bs-primary);
-    border-bottom: 3px solid var(--bs-primary);
-    background-color: transparent;
-    }
+        .nav-tabs .nav-link.active {
+            color: var(--bs-primary);
+            border-bottom: 3px solid var(--bs-primary);
+            background-color: transparent;
+        }
 
-    .wish-row {
-    background-color: #F8F9FA;
-    /* 區隔每個志願區塊 */
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid #E6E9ED;
-    transition: background-color 0.3s ease;
-    }
+        .wish-row {
+            background-color: #F8F9FA;
+            /* 區隔每個志願區塊 */
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #E6E9ED;
+            transition: background-color 0.3s ease;
+        }
 
-    .wish-row:hover {
-    background-color: #FFFFFF;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-    border-color: var(--bs-primary);
-    }
-
+        .wish-row:hover {
+            background-color: #FFFFFF;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            border-color: var(--bs-primary);
+        }
     </style>
 
 
