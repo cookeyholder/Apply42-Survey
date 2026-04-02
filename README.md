@@ -206,7 +206,11 @@ Google Sheets 工作表作為系統資料庫。
    * 前端以 `generatedAt` 顯示「近 X 分鐘更新」。
 5. **功能實現：**
    * 學生端與老師端頁籤由 `statistics.gs` 提供摘要 API、群類明細 API 與效能預算設定。
+   * 前端統計邏輯已抽成共用模組 `statisticsShared.html`，並由 `index.html` / `teacherView.html` 於 `<script>` 區塊載入。
    * Google Sheet 選單開啟的統計 modal（`statisticsTemplate.html`）目前仍採舊流程（全量載入）。
+6. **回退策略：**
+   * 若共用模組導入後出現異常，可先回退 `statisticsShared.html` 的載入，暫時恢復雙頁內嵌統計腳本版本。
+   * 回退後請先驗證：首次載入、群類切換、展開更多、錯誤提示顯示四個場景。
 
 ## 快取機制
 

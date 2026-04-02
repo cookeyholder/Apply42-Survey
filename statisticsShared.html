@@ -1,0 +1,331 @@
+<script>
+    (function () {
+        if (window.__statsSharedInitialized) {
+            return;
+        }
+
+        window.__statsSharedInitialized = true;
+
+        let summaryStats = null;
+        let statsDetailState = {
+            groupName: '',
+            page: 1,
+            pageSize: 10,
+            hasMore: false,
+            items: [],
+            allItems: [],
+            totalItems: 0,
+            version: '',
+            generatedAt: '',
+        };
+
+        function handleStatsGroupChange(event) {
+            const selectedGroup = event.target.value;
+            if (!selectedGroup) {
+                renderSummaryStats(summaryStats || {});
+                return;
+            }
+            loadGroupDetailStats(selectedGroup, 1, true);
+        }
+
+        function loadStatsSummary() {
+            const loadingMsg = document.getElementById('loadingMessageStats');
+            if (loadingMsg) {
+                loadingMsg.style.display = 'block';
+            }
+            const errorDiv = document.getElementById('errorMessageStats');
+            if (errorDiv) {
+                errorDiv.textContent = '';
+            }
+
+            google.script.run
+                .withSuccessHandler(handleSummaryStats)
+                .withFailureHandler(displayErrorStats)
+                .getStatisticsSummaryData();
+        }
+
+        function handleSummaryStats(data) {
+            const loadingMsg = document.getElementById('loadingMessageStats');
+            if (loadingMsg) {
+                loadingMsg.style.display = 'none';
+            }
+
+            if (data && data.error) {
+                displayErrorStats({message: data.error});
+                return;
+            }
+
+            summaryStats = data || {};
+            populateGroupFilterStats((summaryStats.groups || []).map(group => group.groupName));
+            renderSummaryStats(summaryStats);
+        }
+
+        function populateGroupFilterStats(groupNames) {
+            const selectElement = document.getElementById('groupFilterStats');
+            if (!selectElement) {
+                return;
+            }
+
+            selectElement.innerHTML = '<option value="">所有群(類)</option>';
+
+            (groupNames || []).forEach(groupName => {
+                const option = document.createElement('option');
+                option.value = groupName;
+                option.textContent = groupName;
+                selectElement.appendChild(option);
+            });
+
+            selectElement.removeEventListener('change', handleStatsGroupChange);
+            selectElement.addEventListener('change', handleStatsGroupChange);
+        }
+
+        function getMinutesSince(generatedAt) {
+            if (!generatedAt) return '-';
+            const diffMs = Date.now() - new Date(generatedAt).getTime();
+            if (Number.isNaN(diffMs)) return '-';
+            return Math.max(Math.floor(diffMs / 60000), 0);
+        }
+
+        function renderSummaryStats(summary) {
+            const resultDiv = document.getElementById('statisticsResultStats');
+            if (!resultDiv) {
+                return;
+            }
+
+            const groups = summary.groups || [];
+
+            if (groups.length === 0) {
+                resultDiv.innerHTML = '<p class="text-center">目前尚無統計摘要可顯示。</p>';
+                return;
+            }
+
+            const minutesAgo = getMinutesSince(summary.generatedAt);
+            let html = `
+            <div class="alert alert-info d-flex justify-content-between flex-wrap gap-2" role="alert">
+                <span>版本：${escapeHtmlStats(summary.version || '-')} ｜ 近 ${minutesAgo} 分鐘更新</span>
+                <span>群類數：${summary.totalGroups || 0} ｜ 參加集報人數：${summary.totalParticipants || 0}</span>
+            </div>`;
+
+            groups.forEach(group => {
+                const topChoices = (group.topChoices || []).slice(0, 3);
+                html += `<div class="group-container card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="group-title card-title" style="color: white; border-bottom: none; margin-bottom: 0;">${escapeHtmlStats(group.groupName)}</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2 text-muted">總填答次數：${group.totalCount || 0}，不同志願數：${group.totalChoices || 0}</div>
+                    <ul class="list-group list-group-flush">`;
+
+                topChoices.forEach(item => {
+                    html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="stats-choice-label">${escapeHtmlStats(item.choiceLabel || item.name || '-')}</span>
+                    <span class="badge bg-secondary rounded-pill">${item.count} 人</span>
+                </li>`;
+                });
+
+                html += '</ul></div></div>';
+            });
+
+            resultDiv.innerHTML = html;
+        }
+
+        function loadGroupDetailStats(groupName, page, reset) {
+            if (reset) {
+                const loadingMsg = document.getElementById('loadingMessageStats');
+                if (loadingMsg) {
+                    loadingMsg.style.display = 'block';
+                }
+            }
+
+            google.script.run
+                .withSuccessHandler(function (data) {
+                    renderGroupDetailStats(data, reset);
+                })
+                .withFailureHandler(displayErrorStats)
+                .getStatisticsGroupDetail(
+                    groupName,
+                    page,
+                    statsDetailState.pageSize,
+                );
+        }
+
+        function renderGroupDetailStats(data, reset) {
+            const loadingMsg = document.getElementById('loadingMessageStats');
+            if (loadingMsg) {
+                loadingMsg.style.display = 'none';
+            }
+
+            if (data && data.error) {
+                displayErrorStats({message: data.error});
+                return;
+            }
+
+            if (reset) {
+                statsDetailState.items = data.items || [];
+                statsDetailState.allItems = data.items ? data.items.slice() : [];
+            } else {
+                statsDetailState.items = data.items || [];
+                const previousAllItems = Array.isArray(statsDetailState.allItems)
+                    ? statsDetailState.allItems
+                    : [];
+                statsDetailState.allItems = previousAllItems.concat(data.items || []);
+            }
+
+            statsDetailState.groupName = data.groupName || '';
+            statsDetailState.page = data.page || 1;
+            statsDetailState.pageSize = data.pageSize || 10;
+            statsDetailState.hasMore = !!data.hasMore;
+            statsDetailState.totalItems = data.totalItems || 0;
+            statsDetailState.version = data.version || '';
+            statsDetailState.generatedAt = data.generatedAt || '';
+
+            const resultDiv = document.getElementById('statisticsResultStats');
+            const currentPageItems = statsDetailState.items;
+            const tableItems = statsDetailState.allItems;
+
+            if (!resultDiv) {
+                return;
+            }
+
+            if (!currentPageItems.length) {
+                resultDiv.innerHTML = '<p class="text-center">目前尚無符合篩選條件的統計資料可顯示。</p>';
+                return;
+            }
+
+            const maxCount = Math.max(...currentPageItems.map(item => item.count || 0), 1);
+            const minutesAgo = getMinutesSince(statsDetailState.generatedAt);
+
+            let barsHtml = '';
+            currentPageItems.forEach(item => {
+                const count = item.count || 0;
+                const width = Math.max(Math.round((count / maxCount) * 100), 2);
+                barsHtml += `<div class="mb-2">
+                <div class="d-flex justify-content-between stats-bar-row"><span class="stats-bar-label">${escapeHtmlStats(item.choiceLabel || '-')}</span><span class="stats-bar-value">${count}</span></div>
+                <div class="progress" style="height: 10px;">
+                    <div class="progress-bar bg-info" style="width: ${width}%;"></div>
+                </div>
+            </div>`;
+            });
+
+            let rowsHtml = '';
+            tableItems.forEach(item => {
+                rowsHtml += `<tr>
+                <td class="stats-code">${escapeHtmlStats(item.choiceCode || '-')}</td>
+                <td class="stats-name">${escapeHtmlStats(item.choiceName || '-')}</td>
+                <td>${item.count || 0}</td>
+            </tr>`;
+            });
+
+            let html = `<div class="group-container card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="group-title card-title" style="color: white; border-bottom: none; margin-bottom: 0;">${escapeHtmlStats(statsDetailState.groupName)}</h2>
+            </div>
+            <div class="card-body">
+                <div class="mb-2 text-muted">版本：${escapeHtmlStats(statsDetailState.version)} ｜ 近 ${minutesAgo} 分鐘更新 ｜ 已載入 ${tableItems.length}/${statsDetailState.totalItems}</div>
+                <h6 class="mt-2 stats-section-title">Top N 長條圖（目前頁）</h6>
+                ${barsHtml}
+                <h6 class="mt-3">明細表</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead><tr><th>校系代碼</th><th>校系名稱</th><th>人數</th></tr></thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>`;
+
+            if (statsDetailState.hasMore) {
+                html += '<div class="text-center mt-3"><button id="loadMoreStatsBtn" class="btn btn-outline-primary">展開更多（下一頁）</button></div>';
+            }
+
+            html += '</div></div>';
+            resultDiv.innerHTML = html;
+
+            const loadMoreBtn = document.getElementById('loadMoreStatsBtn');
+            if (loadMoreBtn) {
+                loadMoreBtn.onclick = function () {
+                    loadGroupDetailStats(
+                        statsDetailState.groupName,
+                        statsDetailState.page + 1,
+                        false,
+                    );
+                };
+            }
+        }
+
+        function displayErrorStats(error) {
+            const loadingMsg = document.getElementById('loadingMessageStats');
+            if (loadingMsg) {
+                loadingMsg.style.display = 'none';
+            }
+            const errorDiv = document.getElementById('errorMessageStats');
+            if (!errorDiv) {
+                return;
+            }
+
+            console.error('統計資料載入錯誤:', error);
+
+            const errorMessage = error.message || '未知錯誤';
+            const isPermissionError = errorMessage.includes('權限') || errorMessage.includes('存取');
+
+            const alertDiv = document.createElement('div');
+            alertDiv.className = isPermissionError ? 'alert alert-warning' : 'alert alert-danger';
+            alertDiv.setAttribute('role', 'alert');
+
+            const title = document.createElement('h4');
+            title.className = 'alert-heading';
+            title.textContent = isPermissionError ? '權限問題' : '載入錯誤';
+
+            const message = document.createElement('p');
+            message.textContent = isPermissionError
+                ? errorMessage
+                : `載入統計資料時發生錯誤：${errorMessage}`;
+
+            const hr = document.createElement('hr');
+            const footer = document.createElement('p');
+            footer.className = 'mb-0';
+
+            const small = document.createElement('small');
+            small.className = 'text-muted';
+            small.textContent = '請聯絡系統管理員';
+
+            footer.appendChild(small);
+            alertDiv.appendChild(title);
+            alertDiv.appendChild(message);
+            alertDiv.appendChild(hr);
+            alertDiv.appendChild(footer);
+
+            errorDiv.textContent = '';
+            errorDiv.appendChild(alertDiv);
+        }
+
+        function escapeHtmlStats(unsafe) {
+            if (typeof unsafe !== 'string') return '';
+            return unsafe
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        window.initProgressiveStatisticsTab = function () {
+            const tabElement = document.getElementById('stats-tab');
+            if (!tabElement) {
+                return;
+            }
+
+            if (tabElement.dataset.statsInitBound === '1') {
+                return;
+            }
+
+            tabElement.dataset.statsInitBound = '1';
+
+            let statsLoaded = false;
+            tabElement.addEventListener('shown.bs.tab', function () {
+                if (!statsLoaded) {
+                    statsLoaded = true;
+                    loadStatsSummary();
+                }
+            });
+        };
+    })();
+</script>
