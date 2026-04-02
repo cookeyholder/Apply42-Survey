@@ -150,6 +150,11 @@
         }
 
         function renderGroupDetailStats(data, reset) {
+            const filterEl = document.getElementById('groupFilterStats');
+            if (filterEl && data && data.groupName && data.groupName !== filterEl.value) {
+                return;
+            }
+
             const loadingMsg = document.getElementById('loadingMessageStats');
             if (loadingMsg) {
                 loadingMsg.style.display = 'none';
@@ -160,15 +165,24 @@
                 return;
             }
 
+            const normalizedItems = Array.isArray(data && data.items)
+                ? data.items.map(item => ({
+                    choiceCode: String(item && item.choiceCode || ''),
+                    choiceName: String(item && item.choiceName || ''),
+                    choiceLabel: String(item && item.choiceLabel || ''),
+                    count: Number(item && item.count || 0),
+                }))
+                : [];
+
             if (reset) {
-                statsDetailState.items = data.items || [];
-                statsDetailState.allItems = data.items ? data.items.slice() : [];
+                statsDetailState.items = normalizedItems;
+                statsDetailState.allItems = normalizedItems.slice();
             } else {
-                statsDetailState.items = data.items || [];
+                statsDetailState.items = normalizedItems;
                 const previousAllItems = Array.isArray(statsDetailState.allItems)
                     ? statsDetailState.allItems
                     : [];
-                statsDetailState.allItems = previousAllItems.concat(data.items || []);
+                statsDetailState.allItems = previousAllItems.concat(normalizedItems);
             }
 
             statsDetailState.groupName = data.groupName || '';

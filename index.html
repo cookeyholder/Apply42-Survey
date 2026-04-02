@@ -5,6 +5,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="四技二專甄選入學志願調查系統" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net; 
+        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; 
+        script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+        font-src 'self' https://fonts.gstatic.com;
+        img-src 'self' data: https:;" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <base target="_top" />
     <title>四技二專甄選入學志願調查系統</title>
@@ -1226,7 +1231,15 @@
     </script>
     <?!= HtmlService.createHtmlOutputFromFile('statisticsShared').getContent(); ?>
     <script>
-        initProgressiveStatisticsTab();
+        if (typeof initProgressiveStatisticsTab === 'function') {
+            try {
+                initProgressiveStatisticsTab();
+            } catch (error) {
+                console.error('初始化統計分頁時發生錯誤：', error);
+            }
+        } else {
+            console.error('initProgressiveStatisticsTab 未定義：statisticsShared.html 可能未正確載入或執行。');
+        }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"

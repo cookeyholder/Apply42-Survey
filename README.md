@@ -10,7 +10,7 @@
 
 本次分支與近期版本的重點更新：
 
-* **審查修補批次（PR #7）**
+* **審查修補批次（PR #7 ~ #10）**
    * 修正統計欄位索引與快取清理一致性。
    * 強化前端資料注入與動態輸出安全性。
    * 優化部分試算表查詢路徑，降低全表掃描成本。
@@ -206,7 +206,7 @@ Google Sheets 工作表作為系統資料庫。
    * 前端以 `generatedAt` 顯示「近 X 分鐘更新」。
 5. **功能實現：**
    * 學生端與老師端頁籤由 `statistics.gs` 提供摘要 API、群類明細 API 與效能預算設定。
-   * 前端統計邏輯已抽成共用模組 `statisticsShared.html`，並由 `index.html` / `teacherView.html` 於 `<script>` 區塊載入。
+   * 前端統計邏輯已抽成共用模組 `statisticsShared.html`，並由 `index.html` / `teacherView.html` 以 `HtmlService.createHtmlOutputFromFile(...).getContent()` 注入包含 `<script>` 的共用片段。
    * Google Sheet 選單開啟的統計 modal（`statisticsTemplate.html`）目前仍採舊流程（全量載入）。
 6. **回退策略：**
    * 若共用模組導入後出現異常，可先回退 `statisticsShared.html` 的載入，暫時恢復雙頁內嵌統計腳本版本。
