@@ -494,7 +494,7 @@
                 const schoolName = String(configs['學校名稱'] || '');
                 const systemName = String(configs['系統名稱'] || '');
                 const link = document.createElement('a');
-                link.href = `https://www.google.com/maps?q=${encodeURIComponent(schoolName)}`;
+                link.href = 'https://www.google.com/maps?q=' + encodeURIComponent(schoolName);
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
                 link.textContent = schoolName + systemName;
@@ -516,7 +516,7 @@
             if (contactEmail) {
                 const email = configs['電子郵件'] || '-';
                 if (email !== '-') {
-                    contactEmail.href = `mailto:${email}`;
+                    contactEmail.href = 'mailto:' + email;
                     contactEmail.textContent = email;
                 } else {
                     contactEmail.href = '#';
