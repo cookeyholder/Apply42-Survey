@@ -53,7 +53,20 @@ const STATS_CACHE_KEYS = {
 
 function buildChoiceLabel(choiceCode, choiceName) {
     const safeCode = String(choiceCode || "").trim();
-    const safeName = String(choiceName || "").trim();
+    let safeName = String(choiceName || "").trim();
+
+    // 移除名稱尾端的「該校可報志願數」附註，避免統計標籤過長
+    safeName = safeName
+        .replace(/\(該校可報志願數[:：]?\s*\d+\)\s*$/u, "")
+        .trim();
+
+    // 若名稱已含代碼前綴（例：103037-國立XX大學_YY系），避免重複顯示代碼
+    if (safeCode && safeName.startsWith(safeCode)) {
+        safeName = safeName
+            .slice(safeCode.length)
+            .replace(/^[-_\s]+/u, "")
+            .trim();
+    }
 
     if (safeCode && safeName) {
         return `${safeCode} ${safeName}`;
@@ -68,7 +81,13 @@ function buildChoiceLabel(choiceCode, choiceName) {
 }
 
 function getStatisticsVersion(generatedAt) {
-    return `v${Math.floor(new Date(generatedAt).getTime() / 60000)}`;
+    const date = new Date(generatedAt);
+    if (Number.isNaN(date.getTime())) {
+        return `v${Date.now()}`;
+    }
+
+    const pad2 = (value) => String(value).padStart(2, "0");
+    return `v${date.getFullYear()}${pad2(date.getMonth() + 1)}${pad2(date.getDate())}${pad2(date.getHours())}${pad2(date.getMinutes())}${pad2(date.getSeconds())}`;
 }
 
 function getStatisticsSnapshot() {
