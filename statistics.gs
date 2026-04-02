@@ -60,8 +60,13 @@ function toHexString(bytes) {
         .join("");
 }
 
-function getStatisticsGroupDetailCacheKey(groupName, page, pageSize) {
-    const source = `${groupName}|${page}|${pageSize}`;
+function getStatisticsGroupDetailCacheKey(
+    groupName,
+    page,
+    pageSize,
+    snapshotVersion = "",
+) {
+    const source = `${snapshotVersion}|${groupName}|${page}|${pageSize}`;
     const digestBytes = Utilities.computeDigest(
         Utilities.DigestAlgorithm.SHA_256,
         source,
@@ -109,7 +114,8 @@ function getStatisticsVersion(generatedAt) {
     }
 
     const pad2 = (value) => String(value).padStart(2, "0");
-    return `v${date.getFullYear()}${pad2(date.getMonth() + 1)}${pad2(date.getDate())}${pad2(date.getHours())}${pad2(date.getMinutes())}${pad2(date.getSeconds())}`;
+    const pad3 = (value) => String(value).padStart(3, "0");
+    return `v${date.getFullYear()}${pad2(date.getMonth() + 1)}${pad2(date.getDate())}${pad2(date.getHours())}${pad2(date.getMinutes())}${pad2(date.getSeconds())}${pad3(date.getMilliseconds())}`;
 }
 
 function getStatisticsSnapshot() {
@@ -307,19 +313,20 @@ function getStatisticsGroupDetail(groupName, page = 1, pageSize = 10) {
 
         const safePage = Math.max(Number(page) || 1, 1);
         const safePageSize = Math.min(Math.max(Number(pageSize) || 10, 1), 50);
+        const snapshot = getStatisticsSnapshot();
+        if (snapshot.error) {
+            return snapshot;
+        }
+
         const cacheKey = getStatisticsGroupDetailCacheKey(
             safeGroupName,
             safePage,
             safePageSize,
+            snapshot.version || "",
         );
         const cached = getCacheData(cacheKey);
         if (cached) {
             return cached;
-        }
-
-        const snapshot = getStatisticsSnapshot();
-        if (snapshot.error) {
-            return snapshot;
         }
 
         const groupItems = snapshot.groups[safeGroupName];
@@ -359,6 +366,28 @@ function getStatisticsGroupDetail(groupName, page = 1, pageSize = 10) {
     } catch (err) {
         Logger.log("getStatisticsGroupDetail 發生錯誤: %s", err.message);
         return { error: "取得群類明細時發生錯誤：" + err.message };
+    }
+}
+
+/**
+ * @description 清除統計相關主快取，並讓群類明細快取透過版本命名空間自然失效
+ * @returns {boolean}
+ */
+function clearStatisticsCache() {
+    try {
+        const keysToClear = [
+            STATS_CACHE_KEYS.snapshot,
+            STATS_CACHE_KEYS.summary,
+            CACHE_KEYS.STATISTICS_RAW_DATA,
+            CACHE_KEYS.STATISTICS_GROUP_NAMES,
+        ];
+
+        keysToClear.forEach((key) => cleanupCache(key));
+        Logger.log("(clearStatisticsCache)已清除統計主快取：%s", keysToClear.join(","));
+        return true;
+    } catch (error) {
+        Logger.log("(clearStatisticsCache)清除統計快取失敗：%s", error.message);
+        return false;
     }
 }
 
