@@ -644,11 +644,11 @@
         const timerInterval = setInterval(updateCountdown, 1000);
         updateCountdown();
 
-        // --- Statistics Tab Functions (shared) ---
-        <?!= HtmlService.createHtmlOutputFromFile('statisticsShared').getContent(); ?>
-        initProgressiveStatisticsTab();
-        // --- End of Statistics Tab Functions (shared) ---
+        // --- Statistics Tab Functions ---
+        // Shared statistics logic loaded from statisticsShared.html
+        // --- End of Statistics Tab Functions ---
     </script>
+    <?!= HtmlService.createHtmlOutputFromFile('statisticsShared').getContent(); ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
         crossorigin="anonymous"></script>
