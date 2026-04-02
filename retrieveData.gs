@@ -504,20 +504,37 @@ function getOptionData(user = null) {
       };
     }
 
-    // 取得學生選擇資料
-    let studentData = null;
+    // 取得學生選擇資料（只讀取必要列，避免全表掃描）
+    let studentHeaders = null;
+    let studentRow = null;
     const userEmail = user["信箱"] || Session.getActiveUser().getEmail();
 
     if (studentChoiceSheet) {
       try {
-        studentData = studentChoiceSheet
-          .getRange(
-            1,
-            1,
-            studentChoiceSheet.getLastRow(),
-            studentChoiceSheet.getLastColumn()
-          )
-          .getValues();
+        const lastRow = studentChoiceSheet.getLastRow();
+        const lastColumn = studentChoiceSheet.getLastColumn();
+
+        if (lastRow < 1 || lastColumn < 1) {
+          Logger.log("(getOptionData)學生選擇資料不可用");
+          return {
+            isJoined: false,
+            selectedChoices: [],
+            departmentOptions: [],
+          };
+        }
+
+        studentHeaders = studentChoiceSheet
+          .getRange(1, 1, 1, lastColumn)
+          .getValues()[0];
+
+        const emailColumnRange = studentChoiceSheet.getRange(1, 1, lastRow, 1);
+        const studentRowIndex = findValueRow(userEmail, emailColumnRange);
+
+        if (studentRowIndex > 1) {
+          studentRow = studentChoiceSheet
+            .getRange(studentRowIndex, 1, 1, lastColumn)
+            .getValues()[0];
+        }
       } catch (error) {
         Logger.log(
           "(getOptionData)讀取學生選擇資料時發生錯誤：%s",
@@ -531,8 +548,8 @@ function getOptionData(user = null) {
       }
     }
 
-    if (!studentData || studentData.length < 2) {
-      Logger.log("(getOptionData)學生選擇資料不可用");
+    if (!studentHeaders || studentHeaders.length === 0) {
+      Logger.log("(getOptionData)學生選擇標頭不可用");
       return {
         isJoined: false,
         selectedChoices: [],
@@ -540,7 +557,6 @@ function getOptionData(user = null) {
       };
     }
 
-    const studentHeaders = studentData[0];
     const startColumnIndex = studentHeaders.indexOf("是否參加集體報名");
 
     if (startColumnIndex === -1) {
@@ -552,16 +568,10 @@ function getOptionData(user = null) {
       };
     }
 
-    // 尋找學生資料列
-    const studentRowIndex = studentData.findIndex(
-      (row, index) => index > 0 && row[0] === userEmail
-    );
-
     let isJoined = false;
     let selectedChoices = Array(limitOfChoices).fill("");
 
-    if (studentRowIndex > 0) {
-      const studentRow = studentData[studentRowIndex];
+    if (studentRow) {
       isJoined = String(studentRow[startColumnIndex]).trim() === "是";
 
       // 取得已選擇的志願

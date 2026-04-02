@@ -17,13 +17,12 @@ function showStatisticsPage() {
  */
 function getRawStatisticsData() {
   try {
-    // 嘗試從快取取得 (已停用)
-    // const cacheKey = 'STATISTICS_RAW_DATA';
-    // const cachedData = getCacheData(cacheKey);
-    // if (cachedData) {
-    //   Logger.log('(getRawStatisticsData)從快取取得統計資料');
-    //   return cachedData;
-    // }
+    const cacheKey = 'STATISTICS_RAW_DATA';
+    const cachedData = getCacheData(cacheKey);
+    if (cachedData) {
+      Logger.log('(getRawStatisticsData)從快取取得統計資料');
+      return cachedData;
+    }
     
     if (!studentChoiceSheet) {
       Logger.log("「考生志願列表」工作表不存在");
@@ -146,9 +145,9 @@ function getRawStatisticsData() {
     }
 
     Logger.log("產生的統計資料：%s", JSON.stringify(sortedStatistics));
-    
-    // 快取統計結果（已停用）
-    // setCacheData(cacheKey, sortedStatistics, 1200);
+
+    // 快取統計結果（20 分鐘）
+    setCacheData(cacheKey, sortedStatistics, 1200);
     
     return sortedStatistics;
   } catch (err) {
@@ -164,13 +163,12 @@ function getRawStatisticsData() {
  */
 function getUniqueGroupNames() {
   try {
-    // 嘗試從快取取得 (已停用)
-    // const cacheKey = 'STATISTICS_GROUP_NAMES';
-    // const cachedData = getCacheData(cacheKey);
-    // if (cachedData) {
-    //   Logger.log('(getUniqueGroupNames)從快取取得群類名稱');
-    //   return cachedData;
-    // }
+    const cacheKey = 'STATISTICS_GROUP_NAMES';
+    const cachedData = getCacheData(cacheKey);
+    if (cachedData) {
+      Logger.log('(getUniqueGroupNames)從快取取得群類名稱');
+      return cachedData;
+    }
     
     if (!studentChoiceSheet) {
       Logger.log("「考生志願列表」工作表不存在");
@@ -220,9 +218,9 @@ function getUniqueGroupNames() {
     );
     
     const result = { groupNames: Array.from(groupNames).sort() };
-    
-    // 快取群類名稱（已停用）
-    // setCacheData(cacheKey, result, 1200);
+
+    // 快取群類名稱（20 分鐘）
+    setCacheData(cacheKey, result, 1200);
     
     return result;
   } catch (err) {
