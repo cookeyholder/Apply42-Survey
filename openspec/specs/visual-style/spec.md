@@ -1,7 +1,7 @@
 # visual-style Specification
 
 ## Purpose
-TBD - created by archiving change modernize-ui-visuals. Update Purpose after archive.
+本規格定義學生頁、老師頁與統計入口的視覺風格一致化目標，要求以階段化方式完成基準介面統一、非阻斷式驗證回饋、共用 design tokens 與一致的統計互動體驗，以降低學習成本並避免樣式漂移。
 ## Requirements
 ### Requirement: 階段化 UI 一致化執行
 系統 SHALL 在同一個變更中，依序執行 A→B→C 三個階段，不得跳階實作。

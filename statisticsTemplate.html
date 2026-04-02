@@ -171,6 +171,14 @@
                 errorDiv.textContent = '';
             }
 
+            if (state === STATS_UI_STATE.LOADING || state === STATS_UI_STATE.ERROR) {
+                result.style.display = 'none';
+                result.innerHTML = '';
+                return;
+            }
+
+            result.style.display = 'block';
+
             if (state === STATS_UI_STATE.EMPTY) {
                 result.innerHTML = '<p class="text-center">目前尚無符合篩選條件的統計資料可顯示。</p>';
             }
@@ -232,8 +240,6 @@
                 setStatsUiState(STATS_UI_STATE.EMPTY);
                 return;
             }
-
-            setStatsUiState(STATS_UI_STATE.DATA);
 
             for (const groupName in dataToDisplay) {
                 const groupData = dataToDisplay[groupName];
