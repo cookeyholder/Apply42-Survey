@@ -212,6 +212,39 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
             border-color: var(--bs-primary);
         }
+
+        /* Statistics readability */
+        #statisticsResultStats {
+            font-size: 1.1rem;
+        }
+
+        #statisticsResultStats .group-title {
+            font-size: 1.55rem;
+            font-weight: 700;
+        }
+
+        #statisticsResultStats .stats-choice-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            line-height: 1.45;
+        }
+
+        #statisticsResultStats .stats-code {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        #statisticsResultStats .stats-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        #statisticsResultStats table td,
+        #statisticsResultStats table th {
+            font-size: 1.08rem;
+            vertical-align: middle;
+        }
     </style>
 
 
@@ -1239,7 +1272,7 @@
 
                 topChoices.forEach(item => {
                     html += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>${escapeHtmlStats(item.choiceLabel || item.name || '-')}</span>
+                        <span class="stats-choice-label">${escapeHtmlStats(item.choiceLabel || item.name || '-')}</span>
                         <span class="badge bg-secondary rounded-pill">${item.count} 人</span>
                     </li>`;
                 });
@@ -1316,8 +1349,8 @@
             let rowsHtml = '';
             items.forEach(item => {
                 rowsHtml += `<tr>
-                    <td>${escapeHtmlStats(item.choiceCode || '-')}</td>
-                    <td>${escapeHtmlStats(item.choiceName || '-')}</td>
+                    <td class="stats-code">${escapeHtmlStats(item.choiceCode || '-')}</td>
+                    <td class="stats-name">${escapeHtmlStats(item.choiceName || '-')}</td>
                     <td>${item.count || 0}</td>
                 </tr>`;
             });
