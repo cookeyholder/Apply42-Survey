@@ -67,7 +67,10 @@ function getStatisticsGroupDetailCacheKey(groupName, page, pageSize) {
         source,
         Utilities.Charset.UTF_8,
     );
-    return STATS_CACHE_KEYS.groupDetailPrefix + toHexString(digestBytes).slice(0, 32);
+    return (
+        STATS_CACHE_KEYS.groupDetailPrefix +
+        toHexString(digestBytes).slice(0, 32)
+    );
 }
 
 function buildChoiceLabel(choiceCode, choiceName) {
