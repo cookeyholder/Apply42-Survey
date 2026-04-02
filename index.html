@@ -371,7 +371,8 @@
                                 </ul>
                             </div>
                             <div class="d-grid gap-2">
-                                <button type="button" class="btn btn-outline-secondary" onclick="clearAllChoices()">
+                                <button type="button" class="btn btn-outline-secondary"
+                                    onclick="showClearChoicesModal()">
                                     清除所有志願
                                 </button>
                                 <button type="submit" form="departmentChoicesForm" class="btn btn-primary btn-lg">
@@ -403,6 +404,27 @@
             </div>
         </div>
     </div>
+
+    <!-- 清除志願確認 Modal -->
+    <div class="modal fade" id="clearChoicesModal" tabindex="-1" aria-labelledby="clearChoicesModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="clearChoicesModalLabel">確認清除志願</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    這會清除你目前所有已選的學校與科系志願，是否繼續？
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" onclick="clearAllChoices()">確認清除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 報名截止 Modal -->
     <div class="modal fade" id="expiredModal" tabindex="-1" aria-labelledby="expiredModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -1244,10 +1266,25 @@
             }
         });
 
+        function showClearChoicesModal() {
+            const modalElement = document.getElementById('clearChoicesModal');
+            if (!modalElement) {
+                clearAllChoices();
+                return;
+            }
+
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+
         // 清除所有志願
         function clearAllChoices() {
-            if (!confirm('確定要清除所有已選的志願嗎？')) {
-                return;
+            const modalElement = document.getElementById('clearChoicesModal');
+            if (modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
             }
 
             // 重設學校選單
