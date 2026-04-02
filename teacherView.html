@@ -465,7 +465,12 @@
 
             if (navBrand) {
                 navBrand.href = serviceUrl;
-                navBrand.innerHTML = configs['學校名稱'] + '<br>' + configs['系統名稱'] || '';
+                const schoolName = String(configs['學校名稱'] || '');
+                const systemName = String(configs['系統名稱'] || '');
+                navBrand.textContent = '';
+                navBrand.appendChild(document.createTextNode(schoolName));
+                navBrand.appendChild(document.createElement('br'));
+                navBrand.appendChild(document.createTextNode(systemName));
             }
 
             // 教師資訊
@@ -483,7 +488,15 @@
             // 頁尾
             const footerText = document.getElementById('footerText');
             if (footerText) {
-                footerText.innerHTML = `<a href="https://www.google.com/maps?q=${encodeURIComponent(configs['學校名稱'] || '')}" target="_blank">${configs['學校名稱'] + configs['系統名稱'] || ''}</a>`;
+                const schoolName = String(configs['學校名稱'] || '');
+                const systemName = String(configs['系統名稱'] || '');
+                const link = document.createElement('a');
+                link.href = `https://www.google.com/maps?q=${encodeURIComponent(schoolName)}`;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.textContent = schoolName + systemName;
+                footerText.textContent = '';
+                footerText.appendChild(link);
             }
 
             // 聯絡資訊
