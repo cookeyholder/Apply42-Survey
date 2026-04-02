@@ -83,6 +83,11 @@ function doGet(request) {
     if (user["userType"] === "老師") {
       return renderTeacherPage(user, configs);
     }
+
+    Logger.log("(doGet)未知的使用者類型：%s", user["userType"]);
+    return HtmlService.createHtmlOutput(
+      '<div style="padding: 20px; color: red;">使用者角色未定義，請聯絡管理員</div>'
+    );
   } catch (err) {
     Logger.log("(doGet)發生錯誤：%s\n%s", err.message, err.stack);
 
@@ -288,7 +293,7 @@ function doPost(request) {
     }
 
     // 建立日誌記錄
-    record = {
+    const record = {
       isJoined: isJoined,
       departmentChoices_1: departmentChoices[0],
       departmentChoices_2: departmentChoices[1],
@@ -316,7 +321,7 @@ function doPost(request) {
     }
 
     // 渲染成功頁面
-    return renderStudentPage(user, configs, (wishReceived = true));
+    return renderStudentPage(user, configs, true);
   } catch (err) {
     Logger.log("(doPost)發生錯誤：%s\n%s", err.message, err.stack);
     return ContentService.createTextOutput("系統錯誤，請稍後再試").setMimeType(
