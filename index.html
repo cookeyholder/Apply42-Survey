@@ -1324,7 +1324,9 @@
         function showClearChoicesModal() {
             const modalElement = document.getElementById('clearChoicesModal');
             if (!modalElement) {
-                clearAllChoices();
+                if (window.confirm('這會清除你目前所有已選的學校與科系志願，是否繼續？')) {
+                    clearAllChoices();
+                }
                 return;
             }
 
@@ -1334,7 +1336,9 @@
                 return;
             }
 
-            clearAllChoices();
+            if (window.confirm('這會清除你目前所有已選的學校與科系志願，是否繼續？')) {
+                clearAllChoices();
+            }
         }
 
         function snapshotCurrentChoices() {
