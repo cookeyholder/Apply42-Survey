@@ -173,14 +173,17 @@
 
             if (state === STATS_UI_STATE.LOADING || state === STATS_UI_STATE.ERROR) {
                 result.style.display = 'none';
-                result.innerHTML = '';
+                result.replaceChildren();
                 return;
             }
 
             result.style.display = 'block';
 
             if (state === STATS_UI_STATE.EMPTY) {
-                result.innerHTML = '<p class="text-center">目前尚無符合篩選條件的統計資料可顯示。</p>';
+                const emptyText = document.createElement('p');
+                emptyText.className = 'text-center';
+                emptyText.textContent = '目前尚無符合篩選條件的統計資料可顯示。';
+                result.replaceChildren(emptyText);
             }
         }
 
