@@ -138,6 +138,27 @@
             /* 柔和光暈 */
         }
 
+        .form-select.is-invalid,
+        .form-control.is-invalid {
+            border-color: var(--bs-danger);
+            box-shadow: 0 0 0 0.2rem rgba(252, 110, 81, 0.15);
+        }
+
+        .invalid-feedback {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .validation-summary {
+            display: none;
+            border-left: 4px solid var(--bs-danger);
+            margin-bottom: 1rem;
+        }
+
+        .validation-summary.is-visible {
+            display: block;
+        }
+
         /* 針對特定元素的微調 */
         .nav-tabs .nav-link {
             border: none;
@@ -366,6 +387,8 @@
                         <form id="departmentChoicesForm" method="POST" action="#">
                             <!-- 新增隱藏欄位，同步 switch 值 --><input type="hidden" id="isJoinedInput" name="isJoinedInput"
                                 value="否" />
+                            <div id="choiceValidationSummary" class="alert alert-danger validation-summary" role="alert"
+                                aria-live="assertive"></div>
                             <div>報名費用： <span id="registrationFee"></span>元。 <ul>
                                     <li>審查費 200 元，每報名一個志願 100 元。</li>
                                     <li>低收入戶考生報名費全免，中低收入戶考生報名費減免60%</li>
@@ -662,11 +685,13 @@
                 isJoinedFormBtn.style.display = joined ? 'none' : '';
                 isJoinedLabel.textContent = joined ? '我要參加集體報名' : '我「不」參加集體報名';
                 updateRegistrationFee();
+                validateDepartmentChoices();
                 updateDepartmentSubmitBtnState();
             });
 
             // 計算報名費用
             updateRegistrationFee();
+            validateDepartmentChoices();
             updateDepartmentSubmitBtnState();
         });
 
@@ -763,8 +788,7 @@
         // 使用事件委託來監聽動態建立的下拉選單
         document.addEventListener('change', function (e) {
             if (e.target.matches('.departmentChoices')) {
-                checkDuplicateChoices(e.target);
-                checkIfOverLimit(e.target);
+                validateDepartmentChoices();
                 updateRegistrationFee();
                 updateDepartmentSubmitBtnState();
             }
@@ -775,7 +799,9 @@
             const btn = document.querySelector('#departmentChoicesForm button[type="submit"]');
             if (!btn) return; // 如果找不到按鈕就直接返回
 
-            const allEmpty = Array.from(document.querySelectorAll('.departmentChoices')).every(el => el.value === '' || el.value === '0');
+            const validationState = validateDepartmentChoices();
+            const allEmpty = validationState.allEmpty;
+            const hasValidationErrors = !validationState.isValid && !allEmpty;
 
             // 檢查是否已過期
             const endTime = new Date(configs['系統關閉時間']);
@@ -797,6 +823,12 @@
             if (!isJoined) {
                 btn.disabled = false;
                 btn.textContent = '確定送出報名意願和志願選擇';
+                return;
+            }
+
+            if (hasValidationErrors) {
+                btn.disabled = true;
+                btn.textContent = '請先修正志願錯誤';
                 return;
             }
 
@@ -860,6 +892,9 @@
         // 建立學校->科系對照表
         let schoolDepartmentMap = {};
 
+        // 志願驗證狀態：集中管理欄位錯誤與摘要訊息
+        let currentChoiceErrors = [];
+
         function buildSchoolDepartmentMap(options) {
             schoolDepartmentMap = {};
 
@@ -921,8 +956,131 @@
                 deptSelect.disabled = true;
             }
 
+            clearFieldError(deptSelect);
+            validateDepartmentChoices();
             updateRegistrationFee();
             updateDepartmentSubmitBtnState();
+        }
+
+        function getOrCreateFieldErrorNode(selectEl) {
+            let feedback = selectEl.nextElementSibling;
+
+            if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                selectEl.insertAdjacentElement('afterend', feedback);
+            }
+
+            return feedback;
+        }
+
+        function setFieldError(selectEl, message) {
+            if (!selectEl) return;
+            selectEl.classList.add('is-invalid');
+            const feedback = getOrCreateFieldErrorNode(selectEl);
+            feedback.textContent = message;
+        }
+
+        function clearFieldError(selectEl) {
+            if (!selectEl) return;
+            selectEl.classList.remove('is-invalid');
+            const feedback = selectEl.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.textContent = '';
+            }
+        }
+
+        function clearAllChoiceErrors() {
+            document.querySelectorAll('.departmentChoices').forEach(clearFieldError);
+            currentChoiceErrors = [];
+            renderValidationSummary();
+        }
+
+        function renderValidationSummary() {
+            const summary = document.getElementById('choiceValidationSummary');
+            if (!summary) return;
+
+            if (currentChoiceErrors.length === 0) {
+                summary.classList.remove('is-visible');
+                summary.innerHTML = '';
+                return;
+            }
+
+            const uniqueErrors = Array.from(new Set(currentChoiceErrors));
+            const listItems = uniqueErrors.map(msg => `<li>${msg}</li>`).join('');
+            summary.innerHTML = `<div class="fw-bold mb-2">請先修正以下問題：</div><ul class="mb-0">${listItems}</ul>`;
+            summary.classList.add('is-visible');
+        }
+
+        function validateDepartmentChoices() {
+            clearAllChoiceErrors();
+
+            const isJoined = document.getElementById('isJoinedSwitch')?.checked;
+            if (!isJoined) {
+                return {
+                    isValid: true,
+                    allEmpty: true
+                };
+            }
+
+            const deptSelects = Array.from(document.querySelectorAll('.departmentChoices'));
+            const selected = deptSelects
+                .map(el => ({
+                    el,
+                    value: el.value
+                }))
+                .filter(item => item.value && item.value !== '0');
+
+            const allEmpty = selected.length === 0;
+            if (allEmpty) {
+                currentChoiceErrors.push('請至少選擇一個志願。');
+                renderValidationSummary();
+                return {
+                    isValid: false,
+                    allEmpty: true
+                };
+            }
+
+            const duplicatesMap = new Map();
+            selected.forEach(item => {
+                if (!duplicatesMap.has(item.value)) {
+                    duplicatesMap.set(item.value, []);
+                }
+                duplicatesMap.get(item.value).push(item);
+            });
+
+            duplicatesMap.forEach(items => {
+                if (items.length > 1) {
+                    items.forEach(item => setFieldError(item.el, '志願不可重複，請改選其他科系。'));
+                    currentChoiceErrors.push('有重複志願，請改選後再送出。');
+                }
+            });
+
+            const schoolCounts = {};
+            selected.forEach(item => {
+                const schoolCode = item.value.slice(0, 3);
+                if (!schoolCounts[schoolCode]) {
+                    schoolCounts[schoolCode] = [];
+                }
+                schoolCounts[schoolCode].push(item);
+            });
+
+            Object.keys(schoolCounts).forEach(schoolCode => {
+                const entries = schoolCounts[schoolCode];
+                const limitInfo = limitOfSchools?.[schoolCode];
+
+                if (limitInfo && entries.length > limitInfo.limitsOfSchool) {
+                    const overLimitMsg = `${limitInfo.schoolName} 最多可選 ${limitInfo.limitsOfSchool} 個志願。`;
+                    entries.forEach(item => setFieldError(item.el, overLimitMsg));
+                    currentChoiceErrors.push(overLimitMsg);
+                }
+            });
+
+            renderValidationSummary();
+            return {
+                isValid: currentChoiceErrors.length === 0,
+                allEmpty: false
+            };
         }
 
         // 插入志願選擇欄位（階層式雙選單）
@@ -1094,23 +1252,22 @@
             document.getElementById('registrationFee').textContent = fee;
         }
 
-        // 當 switch 狀態改變時更新報名費用
-        document.getElementById('isJoinedSwitch').addEventListener('change', function () {
-            updateRegistrationFee();
-        });
-
         // 提交表單前檢查：若參加集體報名且無任何志願，阻止送出
         document.getElementById('departmentChoicesForm').addEventListener('submit', function (e) {
-            const isJoined = document.getElementById('isJoinedSwitch').checked;
-            const allEmpty = Array.from(document.querySelectorAll('.departmentChoices')).every(el => el.value === '');
+            const result = validateDepartmentChoices();
+            updateDepartmentSubmitBtnState();
 
-            if (isJoined && allEmpty) {
+            if (!result.isValid) {
                 e.preventDefault();
-                alert('請至少選擇一個志願！');
+                const firstInvalid = document.querySelector('.departmentChoices.is-invalid');
+
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstInvalid.focus();
+                }
             }
         });
 
-        // 檢查志願是否重複，並將最後改變的志願重設
         // 清除所有志願
         function clearAllChoices() {
             if (!confirm('確定要清除所有已選的志願嗎？')) {
@@ -1130,63 +1287,8 @@
             });
 
             updateRegistrationFee();
+            clearAllChoiceErrors();
             updateDepartmentSubmitBtnState();
-        }
-
-        function checkDuplicateChoices(changedEl) {
-            const vals = Array.from(document.querySelectorAll('.departmentChoices')).map(function (el) {
-                return el.value;
-            }).filter(v => v !== '' && v !== '0'); // 排除未選擇
-
-            if (new Set(vals).size !== vals.length) {
-                alert('志願不可重複，請重新檢查！');
-
-                if (changedEl) {
-                    changedEl.selectedIndex = 0;
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
-        // 檢查是否超過學校可報志願數，若超過則重設選擇並提示
-        function checkIfOverLimit(changedEl) {
-            const schoolLimits = limitOfSchools;
-
-            if (!schoolLimits || Object.keys(schoolLimits).length === 0) {
-                console.log('limitOfSchools 為空或未定義');
-                return false;
-            }
-
-            const departmentChoices = Array.from(document.querySelectorAll('.departmentChoices')).map(function (el) {
-                return el.value;
-            }).filter(v => v !== '' && v !== '0'); // 排除未選擇
-
-            const counts = {}
-
-                ;
-
-            departmentChoices.forEach(choice => {
-                if (choice && choice.length >= 3) {
-                    const schoolCode = choice.slice(0, 3);
-                    counts[schoolCode] = (counts[schoolCode] || 0) + 1;
-                }
-            });
-
-            for (const schoolCode in counts) {
-                if (schoolLimits[schoolCode] && counts[schoolCode] > schoolLimits[schoolCode].limitsOfSchool) {
-                    if (changedEl) {
-                        changedEl.selectedIndex = 0;
-                    }
-
-                    alert(`${schoolLimits[schoolCode].schoolName}最多可選 ${schoolLimits[schoolCode].limitsOfSchool} 個志願，請重新選擇！`);
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         // 統計共用邏輯已抽出至 statisticsShared.html
