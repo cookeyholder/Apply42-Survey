@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="四技二專甄選入學志願調查系統" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net; 
-        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; 
+        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; 
         script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+        font-src 'self' https://fonts.gstatic.com;
         img-src 'self' data: https:;" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <base target="_top" />
@@ -362,10 +363,40 @@
 
     <script>
         // 解析後端傳過來的 JSON 資料
-        const pageData = JSON.parse('<?= pageData ?>');
-        const { user, configs, loginEmail, serviceUrl, headers, data } = pageData;
+        let pageData = {};
+        let pageDataError = null;
+        try {
+            const pageDataBase64 = '<?= pageDataBase64 ?>';
+            if (pageDataBase64) {
+                const pageDataJson = decodeURIComponent(escape(atob(pageDataBase64)));
+                pageData = JSON.parse(pageDataJson || '{}');
+            }
+        } catch (error) {
+            console.error('頁面資料解析錯誤:', error);
+            pageDataError = error;
+            pageData = {};
+        }
+        const {
+            user = {},
+            configs = {},
+            loginEmail = '',
+            serviceUrl = '',
+            headers = [],
+            data = [],
+        } = pageData;
 
         document.addEventListener("DOMContentLoaded", function () {
+            if (pageDataError) {
+                const container = document.querySelector('.container-fluid') || document.body;
+                container.innerHTML = `
+                    <div class="alert alert-danger mt-4" role="alert">
+                        初始化頁面資料時發生錯誤，請重新整理頁面或聯絡系統管理員。<br>
+                        錯誤訊息：${pageDataError.message}
+                    </div>
+                `;
+                return;
+            }
+
             // 初始化頁面資料
             initializePageData();
 
@@ -402,12 +433,12 @@
 
                     // 找出志願相關的索引
                     const wishIndexes = headers
-                        .map((header, index) => ({ header, index }))
+                        .map((header, index) => ({header, index}))
                         .filter(item => /志願[1-6]校系名稱/.test(item.header));
 
                     // 建立志願資訊HTML，只包含非空白的志願
                     const wishesHtml = wishIndexes
-                        .map(({ header, index }) => {
+                        .map(({header, index}) => {
                             if (row[isJoinedIndex] === '否' || !row[index]) {
                                 return '';
                             }
@@ -465,7 +496,12 @@
 
             if (navBrand) {
                 navBrand.href = serviceUrl;
-                navBrand.innerHTML = configs['學校名稱'] + '<br>' + configs['系統名稱'] || '';
+                const schoolName = String(configs['學校名稱'] || '');
+                const systemName = String(configs['系統名稱'] || '');
+                navBrand.textContent = '';
+                navBrand.appendChild(document.createTextNode(schoolName));
+                navBrand.appendChild(document.createElement('br'));
+                navBrand.appendChild(document.createTextNode(systemName));
             }
 
             // 教師資訊
@@ -483,7 +519,15 @@
             // 頁尾
             const footerText = document.getElementById('footerText');
             if (footerText) {
-                footerText.innerHTML = `<a href="https://www.google.com/maps?q=${encodeURIComponent(configs['學校名稱'] || '')}" target="_blank">${configs['學校名稱'] + configs['系統名稱'] || ''}</a>`;
+                const schoolName = String(configs['學校名稱'] || '');
+                const systemName = String(configs['系統名稱'] || '');
+                const link = document.createElement('a');
+                link.href = 'https://www.google.com/maps?q=' + encodeURIComponent(schoolName);
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.textContent = schoolName + systemName;
+                footerText.textContent = '';
+                footerText.appendChild(link);
             }
 
             // 聯絡資訊
@@ -500,7 +544,7 @@
             if (contactEmail) {
                 const email = configs['電子郵件'] || '-';
                 if (email !== '-') {
-                    contactEmail.href = `mailto:${email}`;
+                    contactEmail.href = 'mailto:' + email;
                     contactEmail.textContent = email;
                 } else {
                     contactEmail.href = '#';
@@ -516,12 +560,12 @@
                 statsLoaded = true;
                 google.script.run
                     .withSuccessHandler(populateGroupFilterStats)
-                    .withFailureHandler(function (error) { console.error('載入群類失敗:', error); })
+                    .withFailureHandler(function (error) {console.error('載入群類失敗:', error);})
                     .getUniqueGroupNames();
 
                 google.script.run
                     .withSuccessHandler(displayStats)
-                    .withFailureHandler(function (error) { console.error('載入統計失敗:', error); })
+                    .withFailureHandler(function (error) {console.error('載入統計失敗:', error);})
                     .getRawStatisticsData();
             }
         });
@@ -589,7 +633,7 @@
             }
 
             if (data && data.error) {
-                displayErrorStats({ message: data.error });
+                displayErrorStats({message: data.error});
                 return;
             }
 

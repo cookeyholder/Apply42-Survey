@@ -411,22 +411,32 @@
 
     <footer class="text-center py-4 text-muted px-2">© <span id="footerText"></span></footer>
     <script> // 解析後端傳過來的 JSON 資料
-        const pageData = JSON.parse('<?= pageData ?>');
-
-        const {
-            user,
-            configs,
-            notifications,
-            limitOfSchools,
-            isJoined,
-            selectedChoices,
-            departmentOptions,
-            loginEmail,
-            serviceUrl,
-            wishesReceivedMessage
+        let pageData = {};
+        let pageDataError = null;
+        try {
+            const pageDataBase64 = '<?= pageDataBase64 ?>';
+            if (pageDataBase64) {
+                const pageDataJson = decodeURIComponent(escape(atob(pageDataBase64)));
+                pageData = JSON.parse(pageDataJson || '{}');
+            }
+        } catch (error) {
+            console.error('頁面資料解析錯誤:', error);
+            pageDataError = error;
+            pageData = {};
         }
 
-            = pageData;
+        const {
+            user = {},
+            configs = {},
+            notifications = '',
+            limitOfSchools = 0,
+            isJoined = false,
+            selectedChoices = [],
+            departmentOptions = [],
+            loginEmail = '',
+            serviceUrl = '',
+            wishesReceivedMessage = ''
+        } = pageData;
 
         // 記錄網頁載入時是否已經截止
         let wasExpiredOnLoad = false;
@@ -559,6 +569,17 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            if (pageDataError) {
+                const container = document.querySelector('.container') || document.body;
+                container.innerHTML = `
+                    <div class="alert alert-danger mt-4" role="alert">
+                        初始化頁面資料時發生錯誤，請重新整理頁面或聯絡系統管理員。<br>
+                        錯誤訊息：${pageDataError.message}
+                    </div>
+                `;
+                return;
+            }
+
             // 初始化頁面資料
             initializePageData();
 
@@ -598,7 +619,12 @@
 
             if (navBrand) {
                 navBrand.href = serviceUrl;
-                navBrand.innerHTML = configs['學校名稱'] + '<br>' + configs['系統名稱'] || '';
+                const schoolName = String(configs['學校名稱'] || '');
+                const systemName = String(configs['系統名稱'] || '');
+                navBrand.textContent = '';
+                navBrand.appendChild(document.createTextNode(schoolName));
+                navBrand.appendChild(document.createElement('br'));
+                navBrand.appendChild(document.createTextNode(systemName));
             }
 
             // 使用者資訊
@@ -640,7 +666,15 @@
             const footerText = document.getElementById('footerText');
 
             if (footerText) {
-                footerText.innerHTML = `<a href="https://www.google.com/maps?q=${encodeURIComponent(configs['學校名稱'] || '')}" target="_blank">${configs['學校名稱'] + configs['系統名稱'] || ''}</a>`;
+                const schoolName = String(configs['學校名稱'] || '');
+                const systemName = String(configs['系統名稱'] || '');
+                const link = document.createElement('a');
+                link.href = 'https://www.google.com/maps?q=' + encodeURIComponent(schoolName);
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.textContent = schoolName + systemName;
+                footerText.textContent = '';
+                footerText.appendChild(link);
             }
 
             // 聯絡資訊
@@ -657,7 +691,7 @@
             if (contactEmail) {
                 const email = configs['電子郵件'] || '-';
                 if (email !== '-') {
-                    contactEmail.href = `mailto:${email}`;
+                    contactEmail.href = 'mailto:' + email;
                     contactEmail.textContent = email;
                 } else {
                     contactEmail.href = '#';
@@ -1211,13 +1245,35 @@
             const errorMessage = error.message || '未知錯誤';
             const isPermissionError = errorMessage.includes('權限') || errorMessage.includes('存取');
 
-            if (isPermissionError) {
-                errorDiv.innerHTML = ` < div class="alert alert-warning" role = "alert" ><h4 class="alert-heading">權限問題</h4><p>${errorMessage}</p><hr><p class="mb-0"><small class="text-muted">請聯絡系統管理員</small></p></div>`;
-            }
+            const alertDiv = document.createElement('div');
+            alertDiv.className = isPermissionError ? 'alert alert-warning' : 'alert alert-danger';
+            alertDiv.setAttribute('role', 'alert');
 
-            else {
-                errorDiv.innerHTML = ` < div class="alert alert-danger" role = "alert" ><h4 class="alert-heading">載入錯誤</h4><p>載入統計資料時發生錯誤：${errorMessage}</p><hr><p class="mb-0"><small class="text-muted">請聯絡系統管理員</small></p></div>`;
-            }
+            const title = document.createElement('h4');
+            title.className = 'alert-heading';
+            title.textContent = isPermissionError ? '權限問題' : '載入錯誤';
+
+            const message = document.createElement('p');
+            message.textContent = isPermissionError
+                ? errorMessage
+                : `載入統計資料時發生錯誤：${errorMessage}`;
+
+            const hr = document.createElement('hr');
+            const footer = document.createElement('p');
+            footer.className = 'mb-0';
+
+            const small = document.createElement('small');
+            small.className = 'text-muted';
+            small.textContent = '請聯絡系統管理員';
+
+            footer.appendChild(small);
+            alertDiv.appendChild(title);
+            alertDiv.appendChild(message);
+            alertDiv.appendChild(hr);
+            alertDiv.appendChild(footer);
+
+            errorDiv.textContent = '';
+            errorDiv.appendChild(alertDiv);
         }
 
         function escapeHtmlStats(unsafe) {
