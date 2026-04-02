@@ -1,18 +1,38 @@
-# 重新設計網頁視覺風格
+## Why
 
-## 摘要
-將網頁視覺風格現代化，採用柔和色系（非紫色）、陰影效果及微互動，提升使用者操作體驗與明確性。
+目前專案雖已完成統計邏輯共用化，但學生頁、老師頁與統計對話框在互動節奏與視覺一致性仍有落差。需要在同一個提案中，依序完成「低風險快速一致化 → 設計系統骨架 → 體驗優先重整」，讓可用性與維護性同步提升。
 
-## 目標
-1. **視覺現代化**：移除舊有配色，改用清新、柔和的現代配色。
-2. **深度感知**：利用陰影（Shadows）增加層次感。
-3. **互動回饋**：加入按鈕、卡片、輸入框的互動效果（Hover, Focus），讓使用者明確感知操作有效。
+## What Changes
 
-## 範圍
-- `index.html` 中的 `<style>` 區塊及相關 HTML class。
-- 可能需要引入 Google Fonts 或調整 Bootstrap 變數（透過 CSS 覆寫）。
+- 將 UI/UX 改善整合為單一 change，分三個實作階段執行：
+	- 階段 A（快速一致化）：統一卡片、按鈕、表單、alert、表格基準樣式與狀態文案，並將阻斷式 alert 改為現代驗證回饋。
+	- 階段 B（設計系統骨架）：建立共用 design tokens 與樣式片段，移除三頁重複 token 定義。
+	- 階段 C（體驗優先重整）：對齊三個統計入口的互動節奏與狀態處理，降低心智切換成本。
+- 明確定義 A→B→C 的實作順序與驗收條件，避免一次大改造成回歸。
+- 在志願重複與超上限場景中，改用「欄位內錯誤提示 + 頁首摘要提示 + 送出按鈕狀態化」取代 alert，確保手機與桌機皆可用。
 
-## 成功標準
-- [ ] 配色方案為柔和色系，無紫色。
-- [ ] 介面元素具有明確的陰影層次。
-- [ ] 滑鼠懸停及點擊時有明顯的視覺回饋。
+## Capabilities
+
+### New Capabilities
+- `visual-style-system`: 提供跨頁一致的視覺 token 與元件樣式基準。
+- `statistics-experience-consistency`: 提供三個統計入口一致的互動流程與狀態呈現。
+
+### Modified Capabilities
+- 無。
+
+## Impact
+
+- Affected code:
+	- `index.html`
+	- `teacherView.html`
+	- `statisticsTemplate.html`
+	- `statisticsShared.html`
+	- `README.md`
+  - `utilities.gs`（若需補充驗證訊息組裝策略）
+- Affected systems:
+	- Bootstrap 樣式覆寫策略
+	- HtmlService 模板片段注入
+	- 統計頁資料載入與狀態顯示流程
+- 風險控制：
+	- 先做階段 A 的低風險收斂，再進入階段 B/C
+	- 每階段皆保留回退步驟與驗收清單
