@@ -1042,13 +1042,26 @@
 
             if (currentChoiceErrors.length === 0) {
                 summary.classList.remove('is-visible');
-                summary.innerHTML = '';
+                summary.replaceChildren();
                 return;
             }
 
             const uniqueErrors = Array.from(new Set(currentChoiceErrors));
-            const listItems = uniqueErrors.map(msg => `<li>${msg}</li>`).join('');
-            summary.innerHTML = `<div class="fw-bold mb-2">請先修正以下問題：</div><ul class="mb-0">${listItems}</ul>`;
+
+            const title = document.createElement('div');
+            title.className = 'fw-bold mb-2';
+            title.textContent = '請先修正以下問題：';
+
+            const list = document.createElement('ul');
+            list.className = 'mb-0';
+
+            uniqueErrors.forEach(msg => {
+                const listItem = document.createElement('li');
+                listItem.textContent = msg;
+                list.appendChild(listItem);
+            });
+
+            summary.replaceChildren(title, list);
             summary.classList.add('is-visible');
         }
 
@@ -1315,8 +1328,13 @@
                 return;
             }
 
-            const modal = new bootstrap.Modal(modalElement);
-            modal.show();
+            if (window.bootstrap?.Modal) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+                return;
+            }
+
+            clearAllChoices();
         }
 
         function snapshotCurrentChoices() {
@@ -1332,7 +1350,7 @@
 
         function showClearChoicesToast() {
             const toastEl = document.getElementById('clearChoicesToast');
-            if (!toastEl) return;
+            if (!toastEl || !window.bootstrap?.Toast) return;
 
             const toast = bootstrap.Toast.getOrCreateInstance(toastEl, {delay: 5000});
             toast.show();
@@ -1378,7 +1396,7 @@
             updateDepartmentSubmitBtnState();
 
             const toastEl = document.getElementById('clearChoicesToast');
-            if (toastEl) {
+            if (toastEl && window.bootstrap?.Toast) {
                 bootstrap.Toast.getOrCreateInstance(toastEl).hide();
             }
 
@@ -1393,7 +1411,7 @@
         function clearAllChoices() {
             const modalElement = document.getElementById('clearChoicesModal');
             if (modalElement) {
-                const modal = bootstrap.Modal.getInstance(modalElement);
+                const modal = window.bootstrap?.Modal ? bootstrap.Modal.getInstance(modalElement) : null;
                 if (modal) {
                     modal.hide();
                 }
