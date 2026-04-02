@@ -205,7 +205,8 @@ Google Sheets 工作表作為系統資料庫。
    * 摘要與明細皆提供 `version` 與 `generatedAt`。
    * 前端以 `generatedAt` 顯示「近 X 分鐘更新」。
 5. **功能實現：**
-   * 由 `statistics.gs` 提供摘要 API、群類明細 API 與效能預算設定。
+   * 學生端與老師端頁籤由 `statistics.gs` 提供摘要 API、群類明細 API 與效能預算設定。
+   * Google Sheet 選單開啟的統計 modal（`statisticsTemplate.html`）目前仍採舊流程（全量載入）。
 
 ## 快取機制
 

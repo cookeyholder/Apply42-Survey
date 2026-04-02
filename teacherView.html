@@ -606,14 +606,7 @@
             }
         }
 
-        // 統計頁籤延遲載入
-        let statsLoaded = false;
-        document.getElementById('stats-tab').addEventListener('shown.bs.tab', function () {
-            if (!statsLoaded) {
-                statsLoaded = true;
-                loadStatsSummary();
-            }
-        });
+        // 統計頁籤的載入由 statisticsShared.html 統一管理
 
         function updateCountdown() {
             const endTime = new Date(configs['系統關閉時間']);

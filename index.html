@@ -753,15 +753,7 @@
             }
         }
 
-        // 統計頁籤延遲載入：切換頁籤時才載入
-        let statsLoaded = false;
-
-        document.getElementById('stats-tab').addEventListener('shown.bs.tab', function () {
-            if (!statsLoaded) {
-                statsLoaded = true;
-                loadStatsSummary();
-            }
-        });
+        // 統計頁籤的載入由 statisticsShared.html 統一管理
 
         // 使用事件委託來監聽動態建立的下拉選單
         document.addEventListener('change', function (e) {
