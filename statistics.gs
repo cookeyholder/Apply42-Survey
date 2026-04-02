@@ -51,6 +51,25 @@ const STATS_CACHE_KEYS = {
     groupDetailPrefix: "STATISTICS_GROUP_DETAIL_V2_",
 };
 
+function toHexString(bytes) {
+    return bytes
+        .map((byte) => {
+            const normalized = byte < 0 ? byte + 256 : byte;
+            return normalized.toString(16).padStart(2, "0");
+        })
+        .join("");
+}
+
+function getStatisticsGroupDetailCacheKey(groupName, page, pageSize) {
+    const source = `${groupName}|${page}|${pageSize}`;
+    const digestBytes = Utilities.computeDigest(
+        Utilities.DigestAlgorithm.SHA_256,
+        source,
+        Utilities.Charset.UTF_8,
+    );
+    return STATS_CACHE_KEYS.groupDetailPrefix + toHexString(digestBytes).slice(0, 32);
+}
+
 function buildChoiceLabel(choiceCode, choiceName) {
     const safeCode = String(choiceCode || "").trim();
     let safeName = String(choiceName || "").trim();
@@ -250,7 +269,10 @@ function getStatisticsSummaryData() {
             groups,
         };
 
-        const payloadBytes = JSON.stringify(result).length;
+        const payloadBytes = Utilities.newBlob(
+            JSON.stringify(result),
+            "application/json",
+        ).getBytes().length;
         if (payloadBytes > STATS_PERFORMANCE_BUDGET.maxPayloadBytes) {
             Logger.log(
                 "(getStatisticsSummaryData)摘要 payload 過大：%d bytes",
@@ -282,11 +304,11 @@ function getStatisticsGroupDetail(groupName, page = 1, pageSize = 10) {
 
         const safePage = Math.max(Number(page) || 1, 1);
         const safePageSize = Math.min(Math.max(Number(pageSize) || 10, 1), 50);
-        const cacheKey =
-            STATS_CACHE_KEYS.groupDetailPrefix +
-            Utilities.base64EncodeWebSafe(
-                `${safeGroupName}|${safePage}|${safePageSize}`,
-            );
+        const cacheKey = getStatisticsGroupDetailCacheKey(
+            safeGroupName,
+            safePage,
+            safePageSize,
+        );
         const cached = getCacheData(cacheKey);
         if (cached) {
             return cached;
@@ -317,7 +339,10 @@ function getStatisticsGroupDetail(groupName, page = 1, pageSize = 10) {
             items: pageItems,
         };
 
-        const payloadBytes = JSON.stringify(result).length;
+        const payloadBytes = Utilities.newBlob(
+            JSON.stringify(result),
+            "application/json",
+        ).getBytes().length;
         if (payloadBytes > STATS_PERFORMANCE_BUDGET.maxPayloadBytes) {
             Logger.log(
                 "(getStatisticsGroupDetail)明細 payload 過大：%d bytes (%s)",
@@ -347,7 +372,7 @@ function getStatisticsPerformanceConfig() {
 }
 
 /**
- * @description 取得原始統計資料供前端使用（含 20 分鐘快取）
+ * @description 取得原始統計資料供前端使用（使用 snapshot TTL 快取）
  * @returns {Object} 依類群分類的志願統計資料或包含錯誤訊息的物件
  */
 function getRawStatisticsData() {
@@ -388,7 +413,7 @@ function getRawStatisticsData() {
 }
 
 /**
- * @description 取得「考生志願列表」中「報考群(類)名稱」的所有唯一值（含 20 分鐘快取）
+ * @description 取得「考生志願列表」中「報考群(類)名稱」的所有唯一值（使用 summary TTL 快取）
  * @returns {Object} 包含唯一群類名稱陣列或錯誤訊息的物件
  */
 function getUniqueGroupNames() {

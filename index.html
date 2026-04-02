@@ -1199,10 +1199,20 @@
             pageSize: 10,
             hasMore: false,
             items: [],
+            allItems: [],
             totalItems: 0,
             version: '',
             generatedAt: '',
         };
+
+        function handleStatsGroupChange(event) {
+            const selectedGroup = event.target.value;
+            if (!selectedGroup) {
+                renderSummaryStats(summaryStats || {});
+                return;
+            }
+            loadGroupDetailStats(selectedGroup, 1, true);
+        }
 
         function loadStatsSummary() {
             const loadingMsg = document.getElementById('loadingMessageStats');
@@ -1247,14 +1257,8 @@
                 selectElement.appendChild(option);
             });
 
-            selectElement.onchange = function () {
-                const selectedGroup = this.value;
-                if (!selectedGroup) {
-                    renderSummaryStats(summaryStats || {});
-                    return;
-                }
-                loadGroupDetailStats(selectedGroup, 1, true);
-            };
+            selectElement.removeEventListener('change', handleStatsGroupChange);
+            selectElement.addEventListener('change', handleStatsGroupChange);
         }
 
         function getMinutesSince(generatedAt) {
@@ -1316,7 +1320,11 @@
                     renderGroupDetailStats(data, reset);
                 })
                 .withFailureHandler(displayErrorStats)
-                .getStatisticsGroupDetail(groupName, page, 10);
+                .getStatisticsGroupDetail(
+                    groupName,
+                    page,
+                    statsDetailState.pageSize,
+                );
         }
 
         function renderGroupDetailStats(data, reset) {
@@ -1332,8 +1340,13 @@
 
             if (reset) {
                 statsDetailState.items = data.items || [];
+                statsDetailState.allItems = data.items ? data.items.slice() : [];
             } else {
-                statsDetailState.items = statsDetailState.items.concat(data.items || []);
+                statsDetailState.items = data.items || [];
+                const previousAllItems = Array.isArray(statsDetailState.allItems)
+                    ? statsDetailState.allItems
+                    : [];
+                statsDetailState.allItems = previousAllItems.concat(data.items || []);
             }
 
             statsDetailState.groupName = data.groupName || '';
@@ -1345,17 +1358,18 @@
             statsDetailState.generatedAt = data.generatedAt || '';
 
             const resultDiv = document.getElementById('statisticsResultStats');
-            const items = statsDetailState.items;
-            if (!items.length) {
+            const currentPageItems = statsDetailState.items;
+            const tableItems = statsDetailState.allItems;
+            if (!currentPageItems.length) {
                 resultDiv.innerHTML = '<p class="text-center">目前尚無符合篩選條件的統計資料可顯示。</p>';
                 return;
             }
 
-            const maxCount = Math.max(...items.map(item => item.count || 0), 1);
+            const maxCount = Math.max(...currentPageItems.map(item => item.count || 0), 1);
             const minutesAgo = getMinutesSince(statsDetailState.generatedAt);
 
             let barsHtml = '';
-            items.forEach(item => {
+            currentPageItems.forEach(item => {
                 const count = item.count || 0;
                 const width = Math.max(Math.round((count / maxCount) * 100), 2);
                 barsHtml += `<div class="mb-2">
@@ -1367,7 +1381,7 @@
             });
 
             let rowsHtml = '';
-            items.forEach(item => {
+            tableItems.forEach(item => {
                 rowsHtml += `<tr>
                     <td class="stats-code">${escapeHtmlStats(item.choiceCode || '-')}</td>
                     <td class="stats-name">${escapeHtmlStats(item.choiceName || '-')}</td>
@@ -1380,7 +1394,7 @@
                     <h2 class="group-title card-title" style="color: white; border-bottom: none; margin-bottom: 0;">${escapeHtmlStats(statsDetailState.groupName)}</h2>
                 </div>
                 <div class="card-body">
-                    <div class="mb-2 text-muted">版本：${escapeHtmlStats(statsDetailState.version)} ｜ 近 ${minutesAgo} 分鐘更新 ｜ 已載入 ${items.length}/${statsDetailState.totalItems}</div>
+                    <div class="mb-2 text-muted">版本：${escapeHtmlStats(statsDetailState.version)} ｜ 近 ${minutesAgo} 分鐘更新 ｜ 已載入 ${tableItems.length}/${statsDetailState.totalItems}</div>
                     <h6 class="mt-2 stats-section-title">Top N 長條圖（目前頁）</h6>
                     ${barsHtml}
                     <h6 class="mt-3">明細表</h6>
