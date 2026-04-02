@@ -2,13 +2,13 @@
  * @description 顯示統計頁面
  */
 function showStatisticsPage() {
-  let htmlOutput = HtmlService.createHtmlOutputFromFile(
-    "statisticsTemplate.html"
-  )
-    .setWidth(900)
-    .setHeight(700);
-  htmlOutput = setXFrameOptionsSafely(htmlOutput); // Use the existing safe wrapper
-  SpreadsheetApp.getUi().showModalDialog(htmlOutput, "各志願選填統計");
+    let htmlOutput = HtmlService.createHtmlOutputFromFile(
+        "statisticsTemplate.html",
+    )
+        .setWidth(900)
+        .setHeight(700);
+    htmlOutput = setXFrameOptionsSafely(htmlOutput); // Use the existing safe wrapper
+    SpreadsheetApp.getUi().showModalDialog(htmlOutput, "各志願選填統計");
 }
 
 /**
@@ -16,145 +16,163 @@ function showStatisticsPage() {
  * @returns {Object} 依類群分類的志願統計資料或包含錯誤訊息的物件
  */
 function getRawStatisticsData() {
-  try {
-    const cacheKey = 'STATISTICS_RAW_DATA';
-    const cachedData = getCacheData(cacheKey);
-    if (cachedData) {
-      Logger.log('(getRawStatisticsData)從快取取得統計資料');
-      return cachedData;
-    }
-    
-    if (!studentChoiceSheet) {
-      Logger.log("「考生志願列表」工作表不存在");
-      return { error: "「考生志願列表」工作表不存在，無法產生統計資料。" };
-    }
-
-    const studentData = studentChoiceSheet.getDataRange().getValues();
-
-    if (studentData.length < 2) {
-      Logger.log("「考生志願列表」沒有足夠的資料");
-      return { error: "「考生志願列表」沒有足夠的資料可供統計。" };
-    }
-
-    const studentHeaders = studentData[0];
-
-    // 取得「是否參加集體報名」、「報考群(類)代碼」、「報考群(類)名稱」和志願欄位的索引
-    const isJoinedIndex = studentHeaders.indexOf("是否參加集體報名");
-    const groupCodeColumnIndex = studentHeaders.indexOf("報考群(類)代碼");
-    const groupNameColumnIndex = studentHeaders.indexOf("報考群(類)名稱");
-    const choiceCodeStartIndex =
-      studentHeaders.indexOf("志願1代碼") !== -1
-        ? studentHeaders.indexOf("志願1代碼")
-        : studentHeaders.indexOf("志願1校系代碼");
-    const choiceNameStartIndex = studentHeaders.indexOf("志願1校系名稱");
-
-    if (isJoinedIndex === -1) {
-      return { error: "找不到「是否參加集體報名」欄位。" };
-    }
-    if (groupCodeColumnIndex === -1) {
-      return { error: "找不到「報考群(類)代碼」欄位。" };
-    }
-    if (groupNameColumnIndex === -1) {
-      return { error: "找不到「報考群(類)名稱」欄位。" };
-    }
-    if (choiceCodeStartIndex === -1 && choiceNameStartIndex === -1) {
-      return {
-        error:
-          "找不到志願代碼或志願名稱相關欄位。請確認欄位名稱是否為「志願[數字]代碼（或志願[數字]校系代碼）」或「志願[數字]校系名稱」。",
-      };
-    }
-    const useCode = choiceCodeStartIndex !== -1;
-    const actualChoiceStartIndex = useCode
-      ? choiceCodeStartIndex
-      : choiceNameStartIndex;
-
-    // 支援連續欄位與交錯欄位兩種歷史表頭配置
-    const getChoiceStep = (startIndex, expectedSecondHeader, fallbackSecondHeader) => {
-      if (startIndex < 0) return 1;
-      if (studentHeaders[startIndex + 1] === expectedSecondHeader) {
-        return 1;
-      }
-      if (
-        fallbackSecondHeader &&
-        studentHeaders[startIndex + 1] === fallbackSecondHeader
-      ) {
-        return 1;
-      }
-      if (studentHeaders[startIndex + 2] === expectedSecondHeader) {
-        return 2;
-      }
-      if (
-        fallbackSecondHeader &&
-        studentHeaders[startIndex + 2] === fallbackSecondHeader
-      ) {
-        return 2;
-      }
-      return 1;
-    };
-
-    const choiceStep = useCode
-      ? getChoiceStep(actualChoiceStartIndex, "志願2代碼", "志願2校系代碼")
-      : getChoiceStep(actualChoiceStartIndex, "志願2校系名稱");
-
-    const statistics = {};
-
-    // 遍歷「考生志願列表」的每一列資料 (跳過標頭)
-    for (let i = 1; i < studentData.length; i++) {
-      const row = studentData[i];
-      // 只統計參加集體報名的學生
-      if (row[isJoinedIndex] !== "是") {
-        continue;
-      }
-
-      const studentGroupCode = String(row[groupCodeColumnIndex] || "").trim();
-      const studentGroupName = String(row[groupNameColumnIndex] || "").trim();
-      let effectiveGroupName;
-
-      if (studentGroupCode && studentGroupName) {
-        effectiveGroupName = `${studentGroupCode}${studentGroupName}`;
-      } else if (studentGroupName) {
-        // Fallback if code is missing
-        effectiveGroupName = studentGroupName;
-      } else if (studentGroupCode) {
-        // Fallback if name is missing
-        effectiveGroupName = studentGroupCode;
-      } else {
-        effectiveGroupName = "其他未分類";
-      }
-
-      for (let k = 0; k < limitOfChoices; k++) {
-        const currentChoiceValue = row[actualChoiceStartIndex + k * choiceStep];
-
-        if (currentChoiceValue && String(currentChoiceValue).trim() !== "") {
-          const currentChoice = String(currentChoiceValue).trim();
-          if (!statistics[effectiveGroupName]) {
-            statistics[effectiveGroupName] = {};
-          }
-          statistics[effectiveGroupName][currentChoice] =
-            (statistics[effectiveGroupName][currentChoice] || 0) + 1;
+    try {
+        const cacheKey = "STATISTICS_RAW_DATA";
+        const cachedData = getCacheData(cacheKey);
+        if (cachedData) {
+            Logger.log("(getRawStatisticsData)從快取取得統計資料");
+            return cachedData;
         }
-      }
+
+        if (!studentChoiceSheet) {
+            Logger.log("「考生志願列表」工作表不存在");
+            return {
+                error: "「考生志願列表」工作表不存在，無法產生統計資料。",
+            };
+        }
+
+        const studentData = studentChoiceSheet.getDataRange().getValues();
+
+        if (studentData.length < 2) {
+            Logger.log("「考生志願列表」沒有足夠的資料");
+            return { error: "「考生志願列表」沒有足夠的資料可供統計。" };
+        }
+
+        const studentHeaders = studentData[0];
+
+        // 取得「是否參加集體報名」、「報考群(類)代碼」、「報考群(類)名稱」和志願欄位的索引
+        const isJoinedIndex = studentHeaders.indexOf("是否參加集體報名");
+        const groupCodeColumnIndex = studentHeaders.indexOf("報考群(類)代碼");
+        const groupNameColumnIndex = studentHeaders.indexOf("報考群(類)名稱");
+        const choiceCodeStartIndex =
+            studentHeaders.indexOf("志願1代碼") !== -1
+                ? studentHeaders.indexOf("志願1代碼")
+                : studentHeaders.indexOf("志願1校系代碼");
+        const choiceNameStartIndex = studentHeaders.indexOf("志願1校系名稱");
+
+        if (isJoinedIndex === -1) {
+            return { error: "找不到「是否參加集體報名」欄位。" };
+        }
+        if (groupCodeColumnIndex === -1) {
+            return { error: "找不到「報考群(類)代碼」欄位。" };
+        }
+        if (groupNameColumnIndex === -1) {
+            return { error: "找不到「報考群(類)名稱」欄位。" };
+        }
+        if (choiceCodeStartIndex === -1 && choiceNameStartIndex === -1) {
+            return {
+                error: "找不到志願代碼或志願名稱相關欄位。請確認欄位名稱是否為「志願[數字]代碼（或志願[數字]校系代碼）」或「志願[數字]校系名稱」。",
+            };
+        }
+        const useCode = choiceCodeStartIndex !== -1;
+        const actualChoiceStartIndex = useCode
+            ? choiceCodeStartIndex
+            : choiceNameStartIndex;
+
+        // 支援連續欄位與交錯欄位兩種歷史表頭配置
+        const getChoiceStep = (
+            startIndex,
+            expectedSecondHeader,
+            fallbackSecondHeader,
+        ) => {
+            if (startIndex < 0) return 1;
+            if (studentHeaders[startIndex + 1] === expectedSecondHeader) {
+                return 1;
+            }
+            if (
+                fallbackSecondHeader &&
+                studentHeaders[startIndex + 1] === fallbackSecondHeader
+            ) {
+                return 1;
+            }
+            if (studentHeaders[startIndex + 2] === expectedSecondHeader) {
+                return 2;
+            }
+            if (
+                fallbackSecondHeader &&
+                studentHeaders[startIndex + 2] === fallbackSecondHeader
+            ) {
+                return 2;
+            }
+            return 1;
+        };
+
+        const choiceStep = useCode
+            ? getChoiceStep(
+                  actualChoiceStartIndex,
+                  "志願2代碼",
+                  "志願2校系代碼",
+              )
+            : getChoiceStep(actualChoiceStartIndex, "志願2校系名稱");
+
+        const statistics = {};
+
+        // 遍歷「考生志願列表」的每一列資料 (跳過標頭)
+        for (let i = 1; i < studentData.length; i++) {
+            const row = studentData[i];
+            // 只統計參加集體報名的學生
+            if (row[isJoinedIndex] !== "是") {
+                continue;
+            }
+
+            const studentGroupCode = String(
+                row[groupCodeColumnIndex] || "",
+            ).trim();
+            const studentGroupName = String(
+                row[groupNameColumnIndex] || "",
+            ).trim();
+            let effectiveGroupName;
+
+            if (studentGroupCode && studentGroupName) {
+                effectiveGroupName = `${studentGroupCode}${studentGroupName}`;
+            } else if (studentGroupName) {
+                // Fallback if code is missing
+                effectiveGroupName = studentGroupName;
+            } else if (studentGroupCode) {
+                // Fallback if name is missing
+                effectiveGroupName = studentGroupCode;
+            } else {
+                effectiveGroupName = "其他未分類";
+            }
+
+            for (let k = 0; k < limitOfChoices; k++) {
+                const currentChoiceValue =
+                    row[actualChoiceStartIndex + k * choiceStep];
+
+                if (
+                    currentChoiceValue &&
+                    String(currentChoiceValue).trim() !== ""
+                ) {
+                    const currentChoice = String(currentChoiceValue).trim();
+                    if (!statistics[effectiveGroupName]) {
+                        statistics[effectiveGroupName] = {};
+                    }
+                    statistics[effectiveGroupName][currentChoice] =
+                        (statistics[effectiveGroupName][currentChoice] || 0) +
+                        1;
+                }
+            }
+        }
+
+        // 將統計結果轉換為排序後的陣列
+        const sortedStatistics = {};
+        for (const groupName in statistics) {
+            sortedStatistics[groupName] = Object.entries(statistics[groupName])
+                .map(([name, count]) => ({ name, count }))
+                .sort((a, b) => b.count - a.count);
+        }
+
+        Logger.log("產生的統計資料：%s", JSON.stringify(sortedStatistics));
+
+        // 快取統計結果（20 分鐘）
+        setCacheData(cacheKey, sortedStatistics, 1200);
+
+        return sortedStatistics;
+    } catch (err) {
+        Logger.log("getRawStatisticsData 發生錯誤: %s", err.message);
+        Logger.log("錯誤堆疊: %s", err.stack);
+        return { error: "產生統計資料時發生未預期的錯誤：" + err.message };
     }
-
-    // 將統計結果轉換為排序後的陣列
-    const sortedStatistics = {};
-    for (const groupName in statistics) {
-      sortedStatistics[groupName] = Object.entries(statistics[groupName])
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count);
-    }
-
-    Logger.log("產生的統計資料：%s", JSON.stringify(sortedStatistics));
-
-    // 快取統計結果（20 分鐘）
-    setCacheData(cacheKey, sortedStatistics, 1200);
-    
-    return sortedStatistics;
-  } catch (err) {
-    Logger.log("getRawStatisticsData 發生錯誤: %s", err.message);
-    Logger.log("錯誤堆疊: %s", err.stack);
-    return { error: "產生統計資料時發生未預期的錯誤：" + err.message };
-  }
 }
 
 /**
@@ -162,70 +180,78 @@ function getRawStatisticsData() {
  * @returns {Object} 包含唯一群類名稱陣列或錯誤訊息的物件
  */
 function getUniqueGroupNames() {
-  try {
-    const cacheKey = 'STATISTICS_GROUP_NAMES';
-    const cachedData = getCacheData(cacheKey);
-    if (cachedData) {
-      Logger.log('(getUniqueGroupNames)從快取取得群類名稱');
-      return cachedData;
-    }
-    
-    if (!studentChoiceSheet) {
-      Logger.log("「考生志願列表」工作表不存在");
-      return { error: "「考生志願列表」工作表不存在，無法取得群類名稱。" };
-    }
-    const studentData = studentChoiceSheet.getDataRange().getValues();
-    if (studentData.length < 2) {
-      Logger.log("「考生志願列表」沒有足夠的資料");
-      return { error: "「考生志願列表」沒有足夠的資料可供讀取群類。" };
-    }
+    try {
+        const cacheKey = "STATISTICS_GROUP_NAMES";
+        const cachedData = getCacheData(cacheKey);
+        if (cachedData) {
+            Logger.log("(getUniqueGroupNames)從快取取得群類名稱");
+            return cachedData;
+        }
 
-    const studentHeaders = studentData[0];
-    const groupCodeIndex = studentHeaders.indexOf("報考群(類)代碼"); // Added for group code
-    const groupNameIndex = studentHeaders.indexOf("報考群(類)名稱");
+        if (!studentChoiceSheet) {
+            Logger.log("「考生志願列表」工作表不存在");
+            return {
+                error: "「考生志願列表」工作表不存在，無法取得群類名稱。",
+            };
+        }
+        const studentData = studentChoiceSheet.getDataRange().getValues();
+        if (studentData.length < 2) {
+            Logger.log("「考生志願列表」沒有足夠的資料");
+            return { error: "「考生志願列表」沒有足夠的資料可供讀取群類。" };
+        }
 
-    if (groupCodeIndex === -1) {
-      // Added error check for group code column
-      return { error: "在「考生志願列表」中找不到「報考群(類)代碼」欄位。" };
+        const studentHeaders = studentData[0];
+        const groupCodeIndex = studentHeaders.indexOf("報考群(類)代碼"); // Added for group code
+        const groupNameIndex = studentHeaders.indexOf("報考群(類)名稱");
+
+        if (groupCodeIndex === -1) {
+            // Added error check for group code column
+            return {
+                error: "在「考生志願列表」中找不到「報考群(類)代碼」欄位。",
+            };
+        }
+        if (groupNameIndex === -1) {
+            return {
+                error: "在「考生志願列表」中找不到「報考群(類)名稱」欄位。",
+            };
+        }
+
+        const groupNames = new Set();
+        for (let i = 1; i < studentData.length; i++) {
+            const groupCode = String(
+                studentData[i][groupCodeIndex] || "",
+            ).trim();
+            const groupNameValue = String(
+                studentData[i][groupNameIndex] || "",
+            ).trim();
+            let combinedGroupName;
+
+            if (groupCode && groupNameValue) {
+                combinedGroupName = `${groupCode}${groupNameValue}`;
+            } else if (groupNameValue) {
+                combinedGroupName = groupNameValue;
+            } else if (groupCode) {
+                combinedGroupName = groupCode;
+            }
+
+            if (combinedGroupName) {
+                groupNames.add(combinedGroupName);
+            }
+        }
+        Logger.log(
+            "取得的唯一群類名稱：%s",
+            JSON.stringify(Array.from(groupNames).sort()),
+        );
+
+        const result = { groupNames: Array.from(groupNames).sort() };
+
+        // 快取群類名稱（20 分鐘）
+        setCacheData(cacheKey, result, 1200);
+
+        return result;
+    } catch (err) {
+        Logger.log("getUniqueGroupNames 發生錯誤: %s", err.message);
+        Logger.log("錯誤堆疊: %s", err.stack);
+        return { error: "取得唯一群類名稱時發生未預期的錯誤：" + err.message };
     }
-    if (groupNameIndex === -1) {
-      return { error: "在「考生志願列表」中找不到「報考群(類)名稱」欄位。" };
-    }
-
-    const groupNames = new Set();
-    for (let i = 1; i < studentData.length; i++) {
-      const groupCode = String(studentData[i][groupCodeIndex] || "").trim();
-      const groupNameValue = String(
-        studentData[i][groupNameIndex] || ""
-      ).trim();
-      let combinedGroupName;
-
-      if (groupCode && groupNameValue) {
-        combinedGroupName = `${groupCode}${groupNameValue}`;
-      } else if (groupNameValue) {
-        combinedGroupName = groupNameValue;
-      } else if (groupCode) {
-        combinedGroupName = groupCode;
-      }
-
-      if (combinedGroupName) {
-        groupNames.add(combinedGroupName);
-      }
-    }
-    Logger.log(
-      "取得的唯一群類名稱：%s",
-      JSON.stringify(Array.from(groupNames).sort())
-    );
-    
-    const result = { groupNames: Array.from(groupNames).sort() };
-
-    // 快取群類名稱（20 分鐘）
-    setCacheData(cacheKey, result, 1200);
-    
-    return result;
-  } catch (err) {
-    Logger.log("getUniqueGroupNames 發生錯誤: %s", err.message);
-    Logger.log("錯誤堆疊: %s", err.stack);
-    return { error: "取得唯一群類名稱時發生未預期的錯誤：" + err.message };
-  }
 }

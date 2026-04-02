@@ -411,7 +411,9 @@
 
     <footer class="text-center py-4 text-muted px-2">© <span id="footerText"></span></footer>
     <script> // 解析後端傳過來的 JSON 資料
-        const pageData = JSON.parse('<?= pageData ?>');
+        const pageDataBase64 = '<?= pageDataBase64 ?>';
+        const pageDataJson = decodeURIComponent(escape(atob(pageDataBase64 || '')));
+        const pageData = JSON.parse(pageDataJson || '{}');
 
         const {
             user,
