@@ -371,7 +371,7 @@
                                 </ul>
                             </div>
                             <div class="d-grid gap-2">
-                                <button type="button" class="btn btn-outline-secondary"
+                                <button type="button" id="clearChoicesButton" class="btn btn-outline-secondary"
                                     onclick="showClearChoicesModal()">
                                     清除所有志願
                                 </button>
@@ -608,6 +608,11 @@
                 button.textContent = '報名已截止';
             });
 
+            const clearChoicesButton = document.getElementById('clearChoicesButton');
+            if (clearChoicesButton) {
+                clearChoicesButton.style.display = 'none';
+            }
+
             // 停用所有志願選擇下拉選單（學校與科系）
             const allSelects = document.querySelectorAll('.departmentChoices, .schoolSelect');
             allSelects.forEach(select => {
@@ -700,13 +705,32 @@
                 updateRegistrationFee();
                 validateDepartmentChoices();
                 updateDepartmentSubmitBtnState();
+                updateClearChoicesButtonVisibility();
             });
 
             // 計算報名費用
             updateRegistrationFee();
             validateDepartmentChoices();
             updateDepartmentSubmitBtnState();
+            updateClearChoicesButtonVisibility();
         });
+
+        function updateClearChoicesButtonVisibility() {
+            const clearChoicesButton = document.getElementById('clearChoicesButton');
+            if (!clearChoicesButton) return;
+
+            const isJoined = document.getElementById('isJoinedSwitch')?.checked;
+            const endTime = new Date(configs['系統關閉時間']);
+            const isExpired = new Date() > endTime;
+            const hasSubmittedResult = typeof wishesReceivedMessage === 'string' && wishesReceivedMessage.trim().length > 0;
+
+            if (isExpired || hasSubmittedResult || !isJoined) {
+                clearChoicesButton.style.display = 'none';
+                return;
+            }
+
+            clearChoicesButton.style.display = '';
+        }
 
         // 初始化頁面資料
         function initializePageData() {
@@ -975,6 +999,7 @@
             validateDepartmentChoices();
             updateRegistrationFee();
             updateDepartmentSubmitBtnState();
+            updateClearChoicesButtonVisibility();
         }
 
         function getOrCreateFieldErrorNode(selectEl) {
@@ -1318,7 +1343,7 @@
                     clearTimeout(clearUndoTimer);
                     clearUndoTimer = null;
                 }
-            }, { once: true });
+            }, {once: true});
 
             if (clearUndoTimer) {
                 clearTimeout(clearUndoTimer);
