@@ -405,6 +405,21 @@
         </div>
     </div>
 
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="clearChoicesToast" class="toast" role="status" aria-live="polite" aria-atomic="true"
+            data-bs-delay="5000">
+            <div class="toast-header">
+                <strong class="me-auto">已清除志願</strong>
+                <small>5 秒內可復原</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body d-flex justify-content-between align-items-center gap-2">
+                <span>已清除目前所有志願。</span>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="undoClearAllChoices()">復原</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 清除志願確認 Modal -->
     <div class="modal fade" id="clearChoicesModal" tabindex="-1" aria-labelledby="clearChoicesModalLabel"
         aria-hidden="true">
@@ -892,6 +907,8 @@
 
         // 志願驗證狀態：集中管理欄位錯誤與摘要訊息
         let currentChoiceErrors = [];
+        let lastClearedChoices = null;
+        let clearUndoTimer = null;
 
         function buildSchoolDepartmentMap(options) {
             schoolDepartmentMap = {};
@@ -1277,6 +1294,76 @@
             modal.show();
         }
 
+        function snapshotCurrentChoices() {
+            const schoolSelects = Array.from(document.querySelectorAll('.schoolSelect'));
+            const deptSelects = Array.from(document.querySelectorAll('.departmentChoices'));
+
+            return schoolSelects.map((schoolSelect, idx) => ({
+                wish: schoolSelect.dataset.wish,
+                schoolValue: schoolSelect.value,
+                deptValue: deptSelects[idx] ? deptSelects[idx].value : ''
+            }));
+        }
+
+        function showClearChoicesToast() {
+            const toastEl = document.getElementById('clearChoicesToast');
+            if (!toastEl) return;
+
+            const toast = bootstrap.Toast.getOrCreateInstance(toastEl, {delay: 5000});
+            toast.show();
+
+            toastEl.addEventListener('hidden.bs.toast', () => {
+                lastClearedChoices = null;
+                if (clearUndoTimer) {
+                    clearTimeout(clearUndoTimer);
+                    clearUndoTimer = null;
+                }
+            }, { once: true });
+
+            if (clearUndoTimer) {
+                clearTimeout(clearUndoTimer);
+            }
+
+            clearUndoTimer = setTimeout(() => {
+                lastClearedChoices = null;
+                clearUndoTimer = null;
+            }, 5000);
+        }
+
+        function undoClearAllChoices() {
+            if (!lastClearedChoices || !Array.isArray(lastClearedChoices)) {
+                return;
+            }
+
+            lastClearedChoices.forEach(item => {
+                const schoolSelect = document.querySelector(`.schoolSelect[data-wish="${item.wish}"]`);
+                if (!schoolSelect) return;
+
+                schoolSelect.value = item.schoolValue || '';
+                handleSchoolChange(schoolSelect);
+
+                const deptSelect = document.getElementById(`departmentChoices_${item.wish}`);
+                if (deptSelect && item.deptValue) {
+                    deptSelect.value = item.deptValue;
+                }
+            });
+
+            validateDepartmentChoices();
+            updateRegistrationFee();
+            updateDepartmentSubmitBtnState();
+
+            const toastEl = document.getElementById('clearChoicesToast');
+            if (toastEl) {
+                bootstrap.Toast.getOrCreateInstance(toastEl).hide();
+            }
+
+            lastClearedChoices = null;
+            if (clearUndoTimer) {
+                clearTimeout(clearUndoTimer);
+                clearUndoTimer = null;
+            }
+        }
+
         // 清除所有志願
         function clearAllChoices() {
             const modalElement = document.getElementById('clearChoicesModal');
@@ -1286,6 +1373,8 @@
                     modal.hide();
                 }
             }
+
+            lastClearedChoices = snapshotCurrentChoices();
 
             // 重設學校選單
             document.querySelectorAll('.schoolSelect').forEach(select => {
@@ -1302,6 +1391,7 @@
             updateRegistrationFee();
             clearAllChoiceErrors();
             updateDepartmentSubmitBtnState();
+            showClearChoicesToast();
         }
 
         // 統計共用邏輯已抽出至 statisticsShared.html
