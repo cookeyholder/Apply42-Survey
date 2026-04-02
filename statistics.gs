@@ -41,31 +41,61 @@ function getRawStatisticsData() {
 
     // 取得「是否參加集體報名」、「報考群(類)代碼」、「報考群(類)名稱」和志願欄位的索引
     const isJoinedIndex = studentHeaders.indexOf("是否參加集體報名");
-    const groupCodeColumnIndex = studentHeaders.indexOf("報考群(類)代碼"); // Added for group code
+    const groupCodeColumnIndex = studentHeaders.indexOf("報考群(類)代碼");
     const groupNameColumnIndex = studentHeaders.indexOf("報考群(類)名稱");
-    const choiceStartIndex = studentHeaders.indexOf("志願1校系代碼");
+    const choiceCodeStartIndex =
+      studentHeaders.indexOf("志願1代碼") !== -1
+        ? studentHeaders.indexOf("志願1代碼")
+        : studentHeaders.indexOf("志願1校系代碼");
     const choiceNameStartIndex = studentHeaders.indexOf("志願1校系名稱");
 
     if (isJoinedIndex === -1) {
       return { error: "找不到「是否參加集體報名」欄位。" };
     }
     if (groupCodeColumnIndex === -1) {
-      // Added error check for group code column
       return { error: "找不到「報考群(類)代碼」欄位。" };
     }
     if (groupNameColumnIndex === -1) {
       return { error: "找不到「報考群(類)名稱」欄位。" };
     }
-    if (choiceStartIndex === -1 && choiceNameStartIndex === -1) {
+    if (choiceCodeStartIndex === -1 && choiceNameStartIndex === -1) {
       return {
         error:
-          "找不到志願代碼或志願名稱相關欄位。請確認欄位名稱是否為「志願[數字]校系代碼」或「志願[數字]校系名稱」。",
+          "找不到志願代碼或志願名稱相關欄位。請確認欄位名稱是否為「志願[數字]代碼（或志願[數字]校系代碼）」或「志願[數字]校系名稱」。",
       };
     }
-    const useCode = choiceStartIndex !== -1;
+    const useCode = choiceCodeStartIndex !== -1;
     const actualChoiceStartIndex = useCode
-      ? choiceStartIndex
+      ? choiceCodeStartIndex
       : choiceNameStartIndex;
+
+    // 支援連續欄位與交錯欄位兩種歷史表頭配置
+    const getChoiceStep = (startIndex, expectedSecondHeader, fallbackSecondHeader) => {
+      if (startIndex < 0) return 1;
+      if (studentHeaders[startIndex + 1] === expectedSecondHeader) {
+        return 1;
+      }
+      if (
+        fallbackSecondHeader &&
+        studentHeaders[startIndex + 1] === fallbackSecondHeader
+      ) {
+        return 1;
+      }
+      if (studentHeaders[startIndex + 2] === expectedSecondHeader) {
+        return 2;
+      }
+      if (
+        fallbackSecondHeader &&
+        studentHeaders[startIndex + 2] === fallbackSecondHeader
+      ) {
+        return 2;
+      }
+      return 1;
+    };
+
+    const choiceStep = useCode
+      ? getChoiceStep(actualChoiceStartIndex, "志願2代碼", "志願2校系代碼")
+      : getChoiceStep(actualChoiceStartIndex, "志願2校系名稱");
 
     const statistics = {};
 
@@ -94,8 +124,7 @@ function getRawStatisticsData() {
       }
 
       for (let k = 0; k < limitOfChoices; k++) {
-        const choiceValue = row[actualChoiceStartIndex + (useCode ? k * 2 : k)];
-        const currentChoiceValue = row[actualChoiceStartIndex + k];
+        const currentChoiceValue = row[actualChoiceStartIndex + k * choiceStep];
 
         if (currentChoiceValue && String(currentChoiceValue).trim() !== "") {
           const currentChoice = String(currentChoiceValue).trim();
