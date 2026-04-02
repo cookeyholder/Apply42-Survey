@@ -383,7 +383,10 @@ function clearStatisticsCache() {
         ];
 
         keysToClear.forEach((key) => cleanupCache(key));
-        Logger.log("(clearStatisticsCache)已清除統計主快取：%s", keysToClear.join(","));
+        Logger.log(
+            "(clearStatisticsCache)已清除統計主快取：%s",
+            keysToClear.join(","),
+        );
         return true;
     } catch (error) {
         Logger.log("(clearStatisticsCache)清除統計快取失敗：%s", error.message);
