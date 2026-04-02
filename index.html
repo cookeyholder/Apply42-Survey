@@ -411,24 +411,32 @@
 
     <footer class="text-center py-4 text-muted px-2">© <span id="footerText"></span></footer>
     <script> // 解析後端傳過來的 JSON 資料
-        const pageDataBase64 = '<?= pageDataBase64 ?>';
-        const pageDataJson = decodeURIComponent(escape(atob(pageDataBase64 || '')));
-        const pageData = JSON.parse(pageDataJson || '{}');
-
-        const {
-            user,
-            configs,
-            notifications,
-            limitOfSchools,
-            isJoined,
-            selectedChoices,
-            departmentOptions,
-            loginEmail,
-            serviceUrl,
-            wishesReceivedMessage
+        let pageData = {};
+        let pageDataError = null;
+        try {
+            const pageDataBase64 = '<?= pageDataBase64 ?>';
+            if (pageDataBase64) {
+                const pageDataJson = decodeURIComponent(escape(atob(pageDataBase64)));
+                pageData = JSON.parse(pageDataJson || '{}');
+            }
+        } catch (error) {
+            console.error('頁面資料解析錯誤:', error);
+            pageDataError = error;
+            pageData = {};
         }
 
-            = pageData;
+        const {
+            user = {},
+            configs = {},
+            notifications = '',
+            limitOfSchools = 0,
+            isJoined = false,
+            selectedChoices = [],
+            departmentOptions = [],
+            loginEmail = '',
+            serviceUrl = '',
+            wishesReceivedMessage = ''
+        } = pageData;
 
         // 記錄網頁載入時是否已經截止
         let wasExpiredOnLoad = false;
@@ -561,6 +569,17 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            if (pageDataError) {
+                const container = document.querySelector('.container') || document.body;
+                container.innerHTML = `
+                    <div class="alert alert-danger mt-4" role="alert">
+                        初始化頁面資料時發生錯誤，請重新整理頁面或聯絡系統管理員。<br>
+                        錯誤訊息：${pageDataError.message}
+                    </div>
+                `;
+                return;
+            }
+
             // 初始化頁面資料
             initializePageData();
 

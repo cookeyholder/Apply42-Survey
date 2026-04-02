@@ -12,12 +12,33 @@ function showStatisticsPage() {
 }
 
 /**
+ * @description 判斷志願欄位步長（支援連續欄位與交錯欄位）
+ * @param {string[]} headers 工作表標頭
+ * @param {number} startIndex 第一個志願欄位索引
+ * @param {string[]} secondChoiceHeaders 第二志願可能標頭名稱
+ * @returns {number} 欄位步長（1 或 2）
+ */
+function resolveChoiceStep(headers, startIndex, secondChoiceHeaders) {
+    if (startIndex < 0) return 1;
+
+    const candidateOffsets = [1, 2];
+    for (const offset of candidateOffsets) {
+        const nextHeader = headers[startIndex + offset];
+        if (secondChoiceHeaders.includes(nextHeader)) {
+            return offset;
+        }
+    }
+
+    return 1;
+}
+
+/**
  * @description 取得原始統計資料供前端使用（含 20 分鐘快取）
  * @returns {Object} 依類群分類的志願統計資料或包含錯誤訊息的物件
  */
 function getRawStatisticsData() {
     try {
-        const cacheKey = "STATISTICS_RAW_DATA";
+        const cacheKey = CACHE_KEYS.STATISTICS_RAW_DATA;
         const cachedData = getCacheData(cacheKey);
         if (cachedData) {
             Logger.log("(getRawStatisticsData)從快取取得統計資料");
@@ -69,41 +90,14 @@ function getRawStatisticsData() {
             ? choiceCodeStartIndex
             : choiceNameStartIndex;
 
-        // 支援連續欄位與交錯欄位兩種歷史表頭配置
-        const getChoiceStep = (
-            startIndex,
-            expectedSecondHeader,
-            fallbackSecondHeader,
-        ) => {
-            if (startIndex < 0) return 1;
-            if (studentHeaders[startIndex + 1] === expectedSecondHeader) {
-                return 1;
-            }
-            if (
-                fallbackSecondHeader &&
-                studentHeaders[startIndex + 1] === fallbackSecondHeader
-            ) {
-                return 1;
-            }
-            if (studentHeaders[startIndex + 2] === expectedSecondHeader) {
-                return 2;
-            }
-            if (
-                fallbackSecondHeader &&
-                studentHeaders[startIndex + 2] === fallbackSecondHeader
-            ) {
-                return 2;
-            }
-            return 1;
-        };
-
-        const choiceStep = useCode
-            ? getChoiceStep(
-                  actualChoiceStartIndex,
-                  "志願2代碼",
-                  "志願2校系代碼",
-              )
-            : getChoiceStep(actualChoiceStartIndex, "志願2校系名稱");
+        const secondChoiceHeaderCandidates = useCode
+            ? ["志願2代碼", "志願2校系代碼"]
+            : ["志願2校系名稱"];
+        const choiceStep = resolveChoiceStep(
+            studentHeaders,
+            actualChoiceStartIndex,
+            secondChoiceHeaderCandidates,
+        );
 
         const statistics = {};
 
@@ -181,7 +175,7 @@ function getRawStatisticsData() {
  */
 function getUniqueGroupNames() {
     try {
-        const cacheKey = "STATISTICS_GROUP_NAMES";
+        const cacheKey = CACHE_KEYS.STATISTICS_GROUP_NAMES;
         const cachedData = getCacheData(cacheKey);
         if (cachedData) {
             Logger.log("(getUniqueGroupNames)從快取取得群類名稱");

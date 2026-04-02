@@ -10,6 +10,8 @@ const CACHE_KEYS = {
   DEPARTMENT_OPTIONS: "departmentOptions",
   EXAM_DATA: "examData",
   CHOICES_DATA: "choicesData",
+  STATISTICS_RAW_DATA: "STATISTICS_RAW_DATA",
+  STATISTICS_GROUP_NAMES: "STATISTICS_GROUP_NAMES",
   USER_DATA_PREFIX: "userData_",
   USER_INDEX: "userIndex", // 使用者索引的快取鍵值
 };

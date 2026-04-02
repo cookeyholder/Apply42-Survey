@@ -529,16 +529,18 @@ function getOptionData(user = null) {
                     .getRange(1, 1, 1, lastColumn)
                     .getValues()[0];
 
-                const emailColumnRange = studentChoiceSheet.getRange(
-                    1,
-                    1,
-                    lastRow,
-                    1,
-                );
-                const studentRowIndex = findValueRow(
-                    userEmail,
-                    emailColumnRange,
-                );
+                const dataRowCount = Math.max(lastRow - 1, 0);
+                let studentRowIndex = 0;
+
+                if (dataRowCount > 0) {
+                    const emailColumnRange = studentChoiceSheet.getRange(
+                        2,
+                        1,
+                        dataRowCount,
+                        1,
+                    );
+                    studentRowIndex = findValueRow(userEmail, emailColumnRange);
+                }
 
                 if (studentRowIndex > 1) {
                     studentRow = studentChoiceSheet
