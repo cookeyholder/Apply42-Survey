@@ -324,8 +324,11 @@ function removeCacheData(key) {
  */
 function clearAllCache() {
     try {
-        const cache = CacheService.getScriptCache();
         const userCacheKeys = getAllUserCacheKeys();
+
+        if (typeof clearStatisticsCache === "function") {
+            clearStatisticsCache();
+        }
 
         // 清除固定的快取鍵值（先嘗試針對性清除）
         for (const cacheKey of Object.values(CACHE_KEYS)) {
@@ -337,22 +340,7 @@ function clearAllCache() {
         }
         Logger.log("(clearAllCache)已清除所有固定快取鍵值和使用者快取鍵值");
 
-        // 使用暴力方式：直接重置整個快取空間
-        // 這將清除所有快取資料，包含以 userData_ 為前綴的使用者快取
-        try {
-            cache.removeAll([]); // 傳入空陣列會清除所有快取
-            Logger.log(
-                "(clearAllCache)已重置所有快取資料（包含使用者資料快取）",
-            );
-        } catch (resetError) {
-            Logger.log(
-                "(clearAllCache)重置快取時發生錯誤：%s",
-                resetError.message,
-            );
-            return false;
-        }
-
-        Logger.log("(clearAllCache)已成功清除所有快取資料");
+        Logger.log("(clearAllCache)已完成可識別快取鍵值的清除");
         return true;
     } catch (error) {
         Logger.log("(clearAllCache)清除所有快取時發生錯誤：%s", error.message);
