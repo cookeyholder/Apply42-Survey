@@ -21,6 +21,29 @@
    * 新增一致性欄位：`version`、`generatedAt`。
    * 新增 Top N 視覺化與分頁式「展開更多」互動，降低單次渲染負擔。
 
+* **介面一致化與體驗重整（OpenSpec: `modernize-ui-visuals`）**
+    * 階段 A 已完成：
+       * 志願驗證改為非阻斷式回饋（欄位錯誤 + 頁首摘要 + 送出按鈕狀態）。
+       * 老師頁倒數樣式對齊學生頁。
+       * 三頁狀態區塊語氣一致化（載入/空資料/錯誤/已截止）。
+    * 階段 B 已完成：
+       * 新增 `uiTokens.html` 作為三頁共用 token 單一來源。
+       * 移除 `index.html`、`teacherView.html`、`statisticsTemplate.html` 重複 `:root` 定義。
+    * 階段 C 已完成（文件與流程對齊）：
+       * 建立三入口統計一致性矩陣與狀態模型。
+
+### modernize-ui-visuals 已知限制
+
+* `statisticsTemplate.html` 仍採全量渲染，不提供「展開更多（下一頁）」。
+* 手機實機驗收仍需依 `docs/UI_PHASE_A_ACCEPTANCE_CHECKLIST.md` 執行並補紀錄。
+
+### modernize-ui-visuals 回退策略
+
+1. 移除三頁對 `uiTokens.html` 的引用，回到頁面內各自 token 定義。
+2. 將學生頁 `validateDepartmentChoices` 回退至舊提交流程。
+3. 將老師頁倒數顯示回退為純文字格式。
+4. 逐頁驗證：登入、志願提交、統計篩選、錯誤顯示。
+
 ## 主要功能
 
 ### 學生端：

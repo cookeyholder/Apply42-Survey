@@ -4,9 +4,12 @@
 - index.html
 - teacherView.html
 - statisticsTemplate.html
+- uiTokens.html
 - openspec/changes/modernize-ui-visuals/tasks.md
 - docs/UI_PHASE_A_BASELINE_AUDIT.md
 - docs/UI_PHASE_A_ACCEPTANCE_CHECKLIST.md
+- docs/UI_TOKENS_GUIDE.md
+- docs/STATISTICS_CONSISTENCY_MATRIX.md
 
 ## Findings
 
@@ -28,6 +31,9 @@
 - 移除學生頁阻斷式 `alert()` 驗證流程。
 - 老師頁倒數區樣式與學生頁對齊（同一組倒數結構）。
 - 統計模板錯誤訊息區塊統一為 alert 視覺語氣。
+- 三頁 token 改為 `uiTokens.html` 單一來源，移除重複 `:root` 定義。
+- 補齊 token 使用規範、覆寫層級與禁用範例文件。
+- 補齊三入口統計一致性矩陣與狀態模型對齊記錄。
 
 ## 風險與待驗證項目
 - 尚未完成實機手動驗證（Chrome/iOS/Android），目前僅完成靜態檢查與錯誤檢查。
@@ -37,5 +43,7 @@
 - 已新增：
   - docs/UI_PHASE_A_BASELINE_AUDIT.md
   - docs/UI_PHASE_A_ACCEPTANCE_CHECKLIST.md
+  - docs/UI_TOKENS_GUIDE.md
+  - docs/STATISTICS_CONSISTENCY_MATRIX.md
   - docs/CODE_REVIEW_REPORT.md
-- OpenSpec 任務已更新為 13/34 完成，並維持 strict validate 通過。
+- OpenSpec 任務已更新為 32/34 完成，並維持 strict validate 通過。
