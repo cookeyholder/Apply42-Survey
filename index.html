@@ -1322,11 +1322,10 @@
         });
 
         function showClearChoicesModal() {
+            const confirmMessage = '這會清除你目前所有已選的學校與科系志願，是否繼續？';
             const modalElement = document.getElementById('clearChoicesModal');
             if (!modalElement) {
-                if (window.confirm('這會清除你目前所有已選的學校與科系志願，是否繼續？')) {
-                    clearAllChoices();
-                }
+                confirmAndClearChoices(confirmMessage);
                 return;
             }
 
@@ -1336,7 +1335,11 @@
                 return;
             }
 
-            if (window.confirm('這會清除你目前所有已選的學校與科系志願，是否繼續？')) {
+            confirmAndClearChoices(confirmMessage);
+        }
+
+        function confirmAndClearChoices(message) {
+            if (window.confirm(message)) {
                 clearAllChoices();
             }
         }
