@@ -179,6 +179,11 @@
 
             result.style.display = 'block';
 
+            if (state === STATS_UI_STATE.DATA) {
+                result.replaceChildren();
+                return;
+            }
+
             if (state === STATS_UI_STATE.EMPTY) {
                 const emptyText = document.createElement('p');
                 emptyText.className = 'text-center';
