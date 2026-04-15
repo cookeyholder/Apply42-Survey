@@ -20,8 +20,8 @@
 
 - [x] 4.1 由最新 `main` 建立本子提案專屬開發分支
 - [x] 4.2 開發完成後執行 `$code-review-and-quality` 與 `$security-and-hardening`
-- [ ] 4.3 開啟 PR 並執行 `$review-pr-3x`，完成所有審查修正
-- [ ] 4.4 執行 `$squash-pr` 併回 `main`
+- [x] 4.3 開啟 PR 並執行 `$review-pr-3x`，完成所有審查修正
+- [x] 4.4 執行 `$squash-pr` 併回 `main`
 
 ## 5. 高頻提交與 TDD
 
