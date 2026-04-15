@@ -208,9 +208,10 @@ function getUserFromCache(email) {
                     cacheKey,
                 });
                 cleanupCache(cacheKey);
+                cleanupCache(bindKey);
                 return null;
             }
-            Logger.log("(getUserFromCache)從快取取得使用者資料：%s", email);
+            Logger.log("(getUserFromCache)從快取取得使用者資料：%s", maskEmail(email));
             return cached;
         }
     } catch (error) {
@@ -360,7 +361,7 @@ function getUserData() {
     const userDataObject = buildUserDataObject(targetSheet, userRow, userType);
 
     if (userDataObject) {
-        // 快取使用者資料（24 小時）
+        // 快取使用者資料（受 MAX_CACHE_EXPIRATION 限制）
         const validEmailCacheKey = getSafeKeyFromEmail(email);
 
         // 將使用者添加到快取索引，方便日後清除
@@ -370,7 +371,7 @@ function getUserData() {
         setCacheData(
             CACHE_KEYS.USER_DATA_PREFIX + validEmailCacheKey,
             userDataObject,
-            86400,
+            MAX_CACHE_EXPIRATION,
         );
         setCacheData(
             `${CACHE_KEYS.USER_DATA_PREFIX}bind_${validEmailCacheKey}`,
@@ -378,7 +379,7 @@ function getUserData() {
                 email: String(email).trim().toLowerCase(),
                 at: new Date().toISOString(),
             },
-            86400,
+            MAX_CACHE_EXPIRATION,
         );
         Logger.log("(getUserData)成功取得並快取使用者資料：%s", email);
     }

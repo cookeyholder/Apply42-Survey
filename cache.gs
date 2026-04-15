@@ -492,9 +492,10 @@ function getAllUserCacheKeys() {
             return [];
         }
 
-        return userIndex.map(
-            (safeEmail) => CACHE_KEYS.USER_DATA_PREFIX + safeEmail,
-        );
+        return userIndex.flatMap((safeEmail) => [
+            CACHE_KEYS.USER_DATA_PREFIX + safeEmail,
+            `${CACHE_KEYS.USER_DATA_PREFIX}bind_${safeEmail}`,
+        ]);
     } catch (error) {
         Logger.log(
             "(getAllUserCacheKeys)取得使用者快取鍵值時發生錯誤：%s",

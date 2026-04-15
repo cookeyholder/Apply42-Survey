@@ -507,14 +507,6 @@ function getSafeKeyFromEmail(email) {
   }
   const normalized = email.trim().toLowerCase();
   if (!normalized) return "";
-  const digest = Utilities.computeDigest(
-    Utilities.DigestAlgorithm.SHA_256,
-    normalized,
-    Utilities.Charset.UTF_8
-  );
-  const hex = digest
-    .map((byte) => (byte < 0 ? byte + 256 : byte))
-    .map((value) => value.toString(16).padStart(2, "0"))
-    .join("");
-  return `u_${hex.slice(0, 24)}`;
+  const hex = toSha256Hex(normalized);
+  return `u_${hex}`;
 }

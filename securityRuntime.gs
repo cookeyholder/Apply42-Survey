@@ -53,13 +53,23 @@ function sanitizeLogPayload(payload) {
     if (!payload || typeof payload !== "object") {
         return payload;
     }
-    const clone = { ...payload };
-    if (clone.sessionEmail) clone.sessionEmail = maskEmail(clone.sessionEmail);
-    if (clone.userEmail) clone.userEmail = maskEmail(clone.userEmail);
-    if (clone.requestedUserEmail) clone.requestedUserEmail = maskEmail(clone.requestedUserEmail);
-    if (clone.effectiveUserEmail) clone.effectiveUserEmail = maskEmail(clone.effectiveUserEmail);
-    if (clone.csrfToken) clone.csrfToken = "***";
-    if (clone.csrfNonce) clone.csrfNonce = "***";
+    const maskByKey = (key, value) => {
+        if (value === undefined || value === null) return value;
+        if (Array.isArray(value)) return value.map((item) => maskByKey(key, item));
+        if (typeof value === "object") return sanitizeLogPayload(value);
+
+        const keyLower = String(key || "").toLowerCase();
+        if (keyLower.includes("csrf")) return "***";
+        if (keyLower.includes("email") || keyLower === "identity") {
+            return maskEmail(String(value));
+        }
+        return value;
+    };
+
+    const clone = {};
+    Object.keys(payload).forEach((key) => {
+        clone[key] = maskByKey(key, payload[key]);
+    });
     return clone;
 }
 
@@ -150,58 +160,76 @@ function assertSubmissionSecurity(request, sessionEmail) {
 
     const serviceOrigin = getServiceOrigin();
     if (serviceOrigin && requestOrigin && serviceOrigin !== requestOrigin) {
-        logSecurityEvent("origin_mismatch", {
+        logSecurityEvent("client_origin_mismatch", {
             sessionEmail,
-            requestOrigin,
+            clientOrigin: requestOrigin,
             serviceOrigin,
         });
-        throw createAuthorizationError(
-            AUTH_ERROR_CODES.FORBIDDEN,
-            "請求來源驗證失敗",
-        );
     }
 
     const nonceHash = toSha256Hex(csrfNonce);
     const cache = CacheService.getScriptCache();
     const usedKey = SECURITY_CACHE_KEYS.NONCE_USED_PREFIX + nonceHash;
-    if (cache.get(usedKey)) {
-        logSecurityEvent("replay_detected", { sessionEmail, nonceHash });
-        throw createAuthorizationError(
-            AUTH_ERROR_CODES.FORBIDDEN,
-            "偵測到重放請求，已拒絕",
-        );
-    }
-
     const ctxKey = SECURITY_CACHE_KEYS.FORM_CTX_PREFIX + nonceHash;
-    const rawCtx = cache.get(ctxKey);
-    if (!rawCtx) {
-        throw createAuthorizationError(
-            AUTH_ERROR_CODES.FORBIDDEN,
-            "安全憑證已失效，請重新整理頁面",
-        );
-    }
+    const nonceLock = LockService.getScriptLock();
+    let lockAcquired = false;
+    try {
+        nonceLock.waitLock(5000);
+        lockAcquired = true;
+        if (cache.get(usedKey)) {
+            logSecurityEvent("replay_detected", { sessionEmail, nonceHash });
+            throw createAuthorizationError(
+                AUTH_ERROR_CODES.FORBIDDEN,
+                "偵測到重放請求，已拒絕",
+            );
+        }
 
-    const ctx = JSON.parse(rawCtx);
-    if (ctx.sessionEmail !== sessionEmail) {
-        logSecurityEvent("session_mismatch", {
-            sessionEmail,
-            ctxEmail: ctx.sessionEmail,
-        });
-        throw createAuthorizationError(
-            AUTH_ERROR_CODES.FORBIDDEN,
-            "使用者身分驗證失敗",
-        );
-    }
+        const rawCtx = cache.get(ctxKey);
+        if (!rawCtx) {
+            throw createAuthorizationError(
+                AUTH_ERROR_CODES.FORBIDDEN,
+                "安全憑證已失效，請重新整理頁面",
+            );
+        }
 
-    if (ctx.tokenHash !== toSha256Hex(csrfToken)) {
-        throw createAuthorizationError(
-            AUTH_ERROR_CODES.FORBIDDEN,
-            "CSRF token 驗證失敗",
-        );
-    }
+        const ctx = JSON.parse(rawCtx);
+        if (ctx.sessionEmail !== sessionEmail) {
+            logSecurityEvent("session_mismatch", {
+                sessionEmail,
+                effectiveUserEmail: ctx.sessionEmail,
+            });
+            throw createAuthorizationError(
+                AUTH_ERROR_CODES.FORBIDDEN,
+                "使用者身分驗證失敗",
+            );
+        }
 
-    cache.remove(ctxKey);
-    cache.put(usedKey, "1", SECURITY_LIMITS.formTtlSec);
+        if (ctx.action !== "submission.write") {
+            throw createAuthorizationError(
+                AUTH_ERROR_CODES.FORBIDDEN,
+                "請求操作類型驗證失敗",
+            );
+        }
+        if (!Number.isFinite(ctx.expiresAtMs) || Date.now() > Number(ctx.expiresAtMs)) {
+            throw createAuthorizationError(
+                AUTH_ERROR_CODES.FORBIDDEN,
+                "安全憑證已過期，請重新整理頁面",
+            );
+        }
+        if (ctx.tokenHash !== toSha256Hex(csrfToken)) {
+            throw createAuthorizationError(
+                AUTH_ERROR_CODES.FORBIDDEN,
+                "CSRF token 驗證失敗",
+            );
+        }
+
+        cache.remove(ctxKey);
+        cache.put(usedKey, "1", SECURITY_LIMITS.formTtlSec);
+    } finally {
+        if (lockAcquired) {
+            nonceLock.releaseLock();
+        }
+    }
 }
 
 function assertRateLimit(endpoint, identity, limit = SECURITY_LIMITS.submitPerMinute) {
@@ -210,7 +238,7 @@ function assertRateLimit(endpoint, identity, limit = SECURITY_LIMITS.submitPerMi
     const key = SECURITY_CACHE_KEYS.RATE_LIMIT_PREFIX + toSha256Hex(`${endpoint}|${identity}|${nowMinute}`).slice(0, 24);
     const current = Number(cache.get(key) || "0");
     if (current >= limit) {
-        logSecurityEvent("rate_limited", { endpoint, identity });
+        logSecurityEvent("rate_limited", { endpoint, sessionEmail: identity });
         incrementAlertCounter(`${endpoint}:rate_limited`);
         throw createAuthorizationError(
             AUTH_ERROR_CODES.FORBIDDEN,
@@ -242,6 +270,11 @@ function incrementAlertCounter(ruleName) {
 }
 
 function runSecurityAlertDrill() {
+    const context = getAuthorizedUserContext(["管理"], "security.alert.drill");
+    assertRateLimit("security.alert.drill", context.sessionEmail, 2);
+    logSecurityEvent("security_alert_drill_triggered", {
+        sessionEmail: context.sessionEmail,
+    });
     incrementAlertCounter("drill:simulated-attack");
     incrementAlertCounter("drill:simulated-attack");
     incrementAlertCounter("drill:simulated-attack");

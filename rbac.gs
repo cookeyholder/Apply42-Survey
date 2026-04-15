@@ -31,7 +31,11 @@ function logAuthorizationDenial(event) {
         ),
         ...event,
     };
-    Logger.log("(AUTH_DENY)%s", JSON.stringify(payload));
+    const safePayload =
+        typeof sanitizeLogPayload === "function"
+            ? sanitizeLogPayload(payload)
+            : payload;
+    Logger.log("(AUTH_DENY)%s", JSON.stringify(safePayload));
 }
 
 /**
