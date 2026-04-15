@@ -746,6 +746,9 @@ function getAllPageData(user) {
         const notifications = getNotifications(configs);
         const limitOfSchools = getLimitOfSchools();
         const optionData = getOptionData(effectiveUser);
+        const requestSecurity = issueSubmissionSecurityContext(
+            context.sessionEmail,
+        );
 
         const pageData = {
             user: effectiveUser,
@@ -757,6 +760,7 @@ function getAllPageData(user) {
             departmentOptions: optionData.departmentOptions,
             loginEmail: context.sessionEmail,
             serviceUrl: getServiceUrl(),
+            requestSecurity,
         };
 
         Logger.log("(getAllPageData)成功批次取得頁面資料");
