@@ -54,13 +54,15 @@ function doGet(request) {
             );
         }
 
-        Logger.log("(doGet)請求參數：%s", JSON.stringify(request.parameters));
+        Logger.log("(doGet)收到頁面請求");
 
         const user = getUserData();
-        Logger.log("(doGet)取得的使用者資料：%s", JSON.stringify(user));
+        if (user && user["信箱"]) {
+            Logger.log("(doGet)使用者：%s", maskEmail(user["信箱"]));
+        }
 
         const configs = getConfigs();
-        Logger.log("(doGet)取得的系統設定資訊：%s", JSON.stringify(configs));
+        Logger.log("(doGet)系統設定載入完成");
 
         // 如果使用者未登入或登入的不在允許名單之中
         if (!user) {
@@ -220,15 +222,19 @@ function doPost(request) {
             ).setMimeType(ContentService.MimeType.TEXT);
         }
 
-        Logger.log("(doPost)請求參數：%s", JSON.stringify(request.parameters));
+        Logger.log("(doPost)收到提交請求");
 
-        const user = getUserData();
-        if (!user || !user["統一入學測驗報名序號"]) {
+        const context = getAuthorizedUserContext(["學生"], "submission.write");
+        const user = context.user;
+        if (!user["統一入學測驗報名序號"]) {
             Logger.log("(doPost)無效的使用者或非學生帳號嘗試提交");
             return ContentService.createTextOutput("存取被拒絕").setMimeType(
                 ContentService.MimeType.TEXT,
             );
         }
+
+        assertRateLimit("submission.write", context.sessionEmail, 12);
+        assertSubmissionSecurity(request, context.sessionEmail);
 
         const configs = getConfigs();
         if (!configs || !configs["系統關閉時間"]) {
@@ -272,6 +278,7 @@ function doPost(request) {
 
         let departmentChoices = [];
         if (isJoined) {
+            const allowedCodes = getAllowedDepartmentCodeSet(user);
             // 取得並驗證志願選擇
             for (let i = 1; i <= limitOfChoices; i++) {
                 const choice = String(
@@ -286,6 +293,7 @@ function doPost(request) {
                 }
                 departmentChoices.push(choice);
             }
+            validateDepartmentChoicesAllowlist(departmentChoices, allowedCodes);
 
             // 排序志願（空值排到後面）
             departmentChoices.sort((a, b) => {
@@ -297,15 +305,14 @@ function doPost(request) {
         }
 
         // 更新資料
-        const userEmail = Session.getActiveUser().getEmail();
-        const row = findValueRow(userEmail, studentChoiceSheet);
-
-        if (!row || row === 0) {
-            Logger.log("(doPost)找不到使用者資料列：%s", userEmail);
-            return ContentService.createTextOutput(
-                "找不到使用者資料",
-            ).setMimeType(ContentService.MimeType.TEXT);
+        const userEmail = context.sessionEmail;
+        const duplicateEmails = detectDuplicateEmails(studentChoiceSheet);
+        if (duplicateEmails.length > 0) {
+            logSecurityEvent("duplicate_email_detected", {
+                duplicates: duplicateEmails.slice(0, 5),
+            });
         }
+        const row = assertSingleStudentRowByEmail(userEmail);
 
         // 準備更新的資料
         const updateData = isJoined
@@ -315,8 +322,13 @@ function doPost(request) {
         if (updateSpecificRow(row, updateData)) {
             Logger.log(
                 "(doPost)成功更新使用者 %s 的志願資料",
-                JSON.stringify(user),
+                maskEmail(userEmail),
             );
+            logSecurityEvent("submission_success", {
+                userEmail,
+                row,
+                isJoined,
+            });
         }
 
         // 建立日誌記錄
@@ -351,6 +363,15 @@ function doPost(request) {
         return renderStudentPage(user, configs, true);
     } catch (err) {
         Logger.log("(doPost)發生錯誤：%s\n%s", err.message, err.stack);
+        if (err && err.name === "AuthorizationError") {
+            logSecurityEvent("submission_denied", {
+                code: err.code || AUTH_ERROR_CODES.FORBIDDEN,
+                message: err.message,
+            });
+            return ContentService.createTextOutput(
+                err.message || "提交驗證失敗",
+            ).setMimeType(ContentService.MimeType.TEXT);
+        }
         return ContentService.createTextOutput(
             "系統錯誤，請稍後再試",
         ).setMimeType(ContentService.MimeType.TEXT);
