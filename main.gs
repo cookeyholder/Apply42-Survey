@@ -54,13 +54,15 @@ function doGet(request) {
             );
         }
 
-        Logger.log("(doGet)請求參數：%s", JSON.stringify(request.parameters));
+        Logger.log("(doGet)收到頁面請求");
 
         const user = getUserData();
-        Logger.log("(doGet)取得的使用者資料：%s", JSON.stringify(user));
+        if (user && user["信箱"]) {
+            Logger.log("(doGet)使用者：%s", maskEmail(user["信箱"]));
+        }
 
         const configs = getConfigs();
-        Logger.log("(doGet)取得的系統設定資訊：%s", JSON.stringify(configs));
+        Logger.log("(doGet)系統設定載入完成");
 
         // 如果使用者未登入或登入的不在允許名單之中
         if (!user) {
@@ -320,8 +322,13 @@ function doPost(request) {
         if (updateSpecificRow(row, updateData)) {
             Logger.log(
                 "(doPost)成功更新使用者 %s 的志願資料",
-                JSON.stringify(user),
+                maskEmail(userEmail),
             );
+            logSecurityEvent("submission_success", {
+                userEmail,
+                row,
+                isJoined,
+            });
         }
 
         // 建立日誌記錄

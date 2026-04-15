@@ -279,6 +279,12 @@ function validateRequestParameters(configs) {
  */
 function exportCsv() {
   try {
+    const context = getAuthorizedUserContext(["老師", "管理"], "export.csv");
+    assertRateLimit("export.csv", context.sessionEmail, 10);
+    logSecurityEvent("export_csv_requested", {
+      sessionEmail: context.sessionEmail,
+    });
+
     // 驗證權限和工作表
     if (!forImportSheet) {
       throw new Error("(exportCsv)匯入報名系統工作表不存在");
@@ -390,6 +396,9 @@ function exportCsv() {
     return fileUrl;
   } catch (error) {
     Logger.log("(exportCsv)發生錯誤：%s", error.message);
+    logSecurityEvent("export_csv_failed", {
+      message: error.message,
+    });
 
     try {
       const ui = SpreadsheetApp.getUi();
