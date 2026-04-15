@@ -746,12 +746,25 @@ function sanitizeHtml(html) {
     }
 
     try {
-        // 移除危險的標籤和屬性
-        return html
-            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-            .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
-            .replace(/javascript:/gi, "")
-            .replace(/on\w+\s*=/gi, "")
+        // escape-then-allowlist 策略：先轉義所有 HTML 特殊字元，再選擇性還原安全白名單 tag
+        const escaped = html
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+
+        // 還原白名單 tag（僅允許無屬性的安全排版 tag）
+        return escaped
+            .replace(/&lt;br&gt;/gi, "<br>")
+            .replace(/&lt;b&gt;/gi, "<b>")
+            .replace(/&lt;\/b&gt;/gi, "</b>")
+            .replace(/&lt;strong&gt;/gi, "<strong>")
+            .replace(/&lt;\/strong&gt;/gi, "</strong>")
+            .replace(/&lt;em&gt;/gi, "<em>")
+            .replace(/&lt;\/em&gt;/gi, "</em>")
+            .replace(/&lt;i&gt;/gi, "<i>")
+            .replace(/&lt;\/i&gt;/gi, "</i>")
             .trim();
     } catch (error) {
         Logger.log("sanitizeHtml() 發生錯誤：%s", error.message);

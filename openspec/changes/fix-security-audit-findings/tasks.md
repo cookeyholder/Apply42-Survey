@@ -13,10 +13,10 @@
 
 ## 3. 中優先修補：後端 HTML 清理策略（P1-B）
 
-- [ ] 3.1 開啟 `retrieveData.gs`，找到 `sanitizeHtml()` 函式（L743-760），移除現有所有黑名單 regex 邏輯
-- [ ] 3.2 實作 escape-then-allowlist 邏輯：先用字元替換轉義 `&`→`&amp;`、`<`→`&lt;`、`>`→`&gt;`、`"`→`&quot;`、`'`→`&#39;`
-- [ ] 3.3 接續 3.2，用正規表達式還原白名單 tag：`&lt;br&gt;`→`<br>`、`&lt;b&gt;`/`&lt;/b&gt;`→`<b>`/`</b>`、`&lt;strong&gt;`/`&lt;/strong&gt;`→`<strong>`/`</strong>`、`&lt;em&gt;`/`&lt;/em&gt;`→`<em>`/`</em>`、`&lt;i&gt;`/`&lt;/i&gt;`→`<i>`/`</i>`
-- [ ] 3.4 以現有通知範本的內容範例測試新版 `sanitizeHtml()`，確認一般換行與粗體格式保留正確，不含任何 `<script>` 或事件屬性可通過
+- [x] 3.1 開啟 `retrieveData.gs`，找到 `sanitizeHtml()` 函式（L743-760），移除現有所有黑名單 regex 邏輯
+- [x] 3.2 實作 escape-then-allowlist 邏輯：先用字元替換轉義 `&`→`&amp;`、`<`→`&lt;`、`>`→`&gt;`、`"`→`&quot;`、`'`→`&#39;`
+- [x] 3.3 接續 3.2，用正規表達式還原白名單 tag：`&lt;br&gt;`→`<br>`、`&lt;b&gt;`/`&lt;/b&gt;`→`<b>`/`</b>`、`&lt;strong&gt;`/`&lt;/strong&gt;`→`<strong>`/`</strong>`、`&lt;em&gt;`/`&lt;/em&gt;`→`<em>`/`</em>`、`&lt;i&gt;`/`&lt;/i&gt;`→`<i>`/`</i>`
+- [x] 3.4 以現有通知範本的內容範例測試新版 `sanitizeHtml()`，確認一般換行與粗體格式保留正確，不含任何 `<script>` 或事件屬性可通過
 
 ## 4. 中優先修補：郵件去重（P2）
 
