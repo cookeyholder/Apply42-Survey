@@ -37,11 +37,11 @@
   - [x] 重放（nonce 重複）請求一律拒絕
   - [x] 覆蓋「合法提交/CSRF 攻擊/重放攻擊」測試案例
 
-- [ ] 5.5 實作 `add-data-integrity-cache-safety`（Step 3, P1，需在 5.4 完成後）
-- [ ] 5.6 驗收 `add-data-integrity-cache-safety`
-  - [ ] A 使用者資料不得寫入 B 使用者上下文
-  - [ ] 快取鍵隔離可防止跨使用者資料命中
-  - [ ] 覆蓋「同帳號合法更新/跨帳號污染阻擋/快取隔離」測試案例
+- [x] 5.5 實作 `add-data-integrity-cache-safety`（Step 3, P1，需在 5.4 完成後）
+- [x] 5.6 驗收 `add-data-integrity-cache-safety`
+  - [x] A 使用者資料不得寫入 B 使用者上下文
+  - [x] 快取鍵隔離可防止跨使用者資料命中
+  - [x] 覆蓋「同帳號合法更新/跨帳號污染阻擋/快取隔離」測試案例
 
 - [ ] 5.7 實作 `add-security-observability-throttling`（Step 4, P1，需在 5.6 完成後）
 - [ ] 5.8 驗收 `add-security-observability-throttling`
