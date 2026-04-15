@@ -25,17 +25,17 @@
 
 ## 5. 子提案實作順序與驗收清單（依序執行）
 
-- [ ] 5.1 實作 `add-server-side-rbac-guards`（Step 1, P0）
-- [ ] 5.2 驗收 `add-server-side-rbac-guards`
-  - [ ] 未授權角色不得存取/寫入受保護資源
-  - [ ] 合法授權流程回歸測試全綠
-  - [ ] 覆蓋「授權成功/授權失敗/越權存取」測試案例
+- [x] 5.1 實作 `add-server-side-rbac-guards`（Step 1, P0）
+- [x] 5.2 驗收 `add-server-side-rbac-guards`
+  - [x] 未授權角色不得存取/寫入受保護資源
+  - [x] 合法授權流程回歸測試全綠
+  - [x] 覆蓋「授權成功/授權失敗/越權存取」測試案例
 
-- [ ] 5.3 實作 `add-csrf-replay-protection`（Step 2, P0，需在 5.2 完成後）
-- [ ] 5.4 驗收 `add-csrf-replay-protection`
-  - [ ] 缺 token/無效 token/過期 token 一律拒絕
-  - [ ] 重放（nonce 重複）請求一律拒絕
-  - [ ] 覆蓋「合法提交/CSRF 攻擊/重放攻擊」測試案例
+- [x] 5.3 實作 `add-csrf-replay-protection`（Step 2, P0，需在 5.2 完成後）
+- [x] 5.4 驗收 `add-csrf-replay-protection`
+  - [x] 缺 token/無效 token/過期 token 一律拒絕
+  - [x] 重放（nonce 重複）請求一律拒絕
+  - [x] 覆蓋「合法提交/CSRF 攻擊/重放攻擊」測試案例
 
 - [ ] 5.5 實作 `add-data-integrity-cache-safety`（Step 3, P1，需在 5.4 完成後）
 - [ ] 5.6 驗收 `add-data-integrity-cache-safety`

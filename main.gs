@@ -220,7 +220,7 @@ function doPost(request) {
             ).setMimeType(ContentService.MimeType.TEXT);
         }
 
-        Logger.log("(doPost)請求參數：%s", JSON.stringify(request.parameters));
+        Logger.log("(doPost)收到提交請求");
 
         const context = getAuthorizedUserContext(["學生"], "submission.write");
         const user = context.user;
@@ -230,6 +230,9 @@ function doPost(request) {
                 ContentService.MimeType.TEXT,
             );
         }
+
+        assertRateLimit("submission.write", context.sessionEmail, 12);
+        assertSubmissionSecurity(request, context.sessionEmail);
 
         const configs = getConfigs();
         if (!configs || !configs["系統關閉時間"]) {
@@ -352,6 +355,15 @@ function doPost(request) {
         return renderStudentPage(user, configs, true);
     } catch (err) {
         Logger.log("(doPost)發生錯誤：%s\n%s", err.message, err.stack);
+        if (err && err.name === "AuthorizationError") {
+            logSecurityEvent("submission_denied", {
+                code: err.code || AUTH_ERROR_CODES.FORBIDDEN,
+                message: err.message,
+            });
+            return ContentService.createTextOutput(
+                err.message || "提交驗證失敗",
+            ).setMimeType(ContentService.MimeType.TEXT);
+        }
         return ContentService.createTextOutput(
             "系統錯誤，請稍後再試",
         ).setMimeType(ContentService.MimeType.TEXT);
