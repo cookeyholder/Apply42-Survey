@@ -438,11 +438,28 @@ function getNotifications(configs) {
  */
 function getOptionData(user = null) {
     try {
-        if (!user) {
-            user = getUserData();
+        const context = getAuthorizedUserContext(
+            ["學生", "老師", "管理"],
+            "option.read",
+        );
+        const effectiveUser = context.user;
+
+        if (user && user["信箱"] && user["信箱"] !== effectiveUser["信箱"]) {
+            logAuthorizationDenial({
+                code: AUTH_ERROR_CODES.FORBIDDEN,
+                resource: "option.read",
+                sessionEmail: context.sessionEmail,
+                requestedUserEmail: String(user["信箱"]),
+                effectiveUserEmail: String(effectiveUser["信箱"] || ""),
+                reason: "ignore_client_identity_context",
+            });
         }
 
-        if (!user || !user["報考群(類)代碼"] || !user["報考群(類)名稱"]) {
+        if (
+            !effectiveUser ||
+            !effectiveUser["報考群(類)代碼"] ||
+            !effectiveUser["報考群(類)名稱"]
+        ) {
             Logger.log("getOptionData: 使用者資料不完整");
             return {
                 isJoined: false,
@@ -492,8 +509,8 @@ function getOptionData(user = null) {
         }
 
         // 尋找對應的群類欄位
-        const groupCode = String(user["報考群(類)代碼"]).padStart(2, "0");
-        const groupName = String(user["報考群(類)名稱"]);
+        const groupCode = String(effectiveUser["報考群(類)代碼"]).padStart(2, "0");
+        const groupName = String(effectiveUser["報考群(類)名稱"]);
         const targetColumn = groupCode + groupName;
 
         const groupIndex = choicesData.headers.indexOf(targetColumn);
@@ -509,7 +526,8 @@ function getOptionData(user = null) {
         // 取得學生選擇資料（只讀取必要列，避免全表掃描）
         let studentHeaders = null;
         let studentRow = null;
-        const userEmail = user["信箱"] || Session.getActiveUser().getEmail();
+        const userEmail =
+            String(effectiveUser["信箱"] || "").trim() || context.sessionEmail;
 
         if (studentChoiceSheet) {
             try {
@@ -710,20 +728,34 @@ function sanitizeHtml(html) {
  */
 function getAllPageData(user) {
     try {
+        const context = getAuthorizedUserContext(["學生"], "page.student.read");
+        const effectiveUser = context.user;
+
+        if (user && user["信箱"] && user["信箱"] !== effectiveUser["信箱"]) {
+            logAuthorizationDenial({
+                code: AUTH_ERROR_CODES.FORBIDDEN,
+                resource: "page.student.read",
+                sessionEmail: context.sessionEmail,
+                requestedUserEmail: String(user["信箱"]),
+                effectiveUserEmail: String(effectiveUser["信箱"] || ""),
+                reason: "ignore_client_identity_context",
+            });
+        }
+
         const configs = getConfigs();
         const notifications = getNotifications(configs);
         const limitOfSchools = getLimitOfSchools();
-        const optionData = getOptionData(user);
+        const optionData = getOptionData(effectiveUser);
 
         const pageData = {
-            user: user,
+            user: effectiveUser,
             configs: configs,
             notifications: notifications,
             limitOfSchools: limitOfSchools,
             isJoined: optionData.isJoined,
             selectedChoices: optionData.selectedChoices,
             departmentOptions: optionData.departmentOptions,
-            loginEmail: Session.getActiveUser().getEmail(),
+            loginEmail: context.sessionEmail,
             serviceUrl: getServiceUrl(),
         };
 
@@ -745,13 +777,30 @@ function getAllPageData(user) {
  */
 function getAllTeacherPageData(user) {
     try {
+        const context = getAuthorizedUserContext(
+            ["老師", "管理"],
+            "page.teacher.read",
+        );
+        const effectiveUser = context.user;
+
+        if (user && user["信箱"] && user["信箱"] !== effectiveUser["信箱"]) {
+            logAuthorizationDenial({
+                code: AUTH_ERROR_CODES.FORBIDDEN,
+                resource: "page.teacher.read",
+                sessionEmail: context.sessionEmail,
+                requestedUserEmail: String(user["信箱"]),
+                effectiveUserEmail: String(effectiveUser["信箱"] || ""),
+                reason: "ignore_client_identity_context",
+            });
+        }
+
         const configs = getConfigs();
-        const studentData = getTraineesDepartmentChoices(user);
+        const studentData = getTraineesDepartmentChoices(effectiveUser);
 
         const pageData = {
-            user: user,
+            user: effectiveUser,
             configs: configs,
-            loginEmail: Session.getActiveUser().getEmail(),
+            loginEmail: context.sessionEmail,
             serviceUrl: getServiceUrl(),
             headers: studentData.headers,
             data: studentData.data,
