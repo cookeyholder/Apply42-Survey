@@ -246,7 +246,7 @@ function getStatisticsSnapshot() {
 function getStatisticsSummaryData() {
     try {
         const context = getAuthorizedUserContext(
-            ["老師"],
+            ["學生", "老師"],
             "statistics.summary.read",
         );
         assertRateLimit("statistics.summary.read", context.sessionEmail, 30);
@@ -312,7 +312,7 @@ function getStatisticsSummaryData() {
 function getStatisticsGroupDetail(groupName, page = 1, pageSize = 10) {
     try {
         const context = getAuthorizedUserContext(
-            ["老師"],
+            ["學生", "老師"],
             "statistics.group-detail.read",
         );
         assertRateLimit("statistics.group-detail.read", context.sessionEmail, 40);
