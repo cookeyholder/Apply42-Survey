@@ -3,6 +3,9 @@ function findUniqueValueRows(keyword, targetSheet, headerName = "") {
     try {
         let range = targetSheet;
         if (typeof targetSheet.getDataRange === "function") {
+            if (typeof targetSheet.getLastColumn === "function" && targetSheet.getLastColumn() < 1) {
+                return [];
+            }
             if (headerName) {
                 const targetCol = getHeaderIndex(targetSheet, headerName);
                 const lastRow = targetSheet.getLastRow();
@@ -78,6 +81,9 @@ function getAllowedDepartmentCodeSet(user, sessionEmail = "") {
     const groupCode = String(user?.["報考群(類)代碼"] || "").padStart(2, "0");
     const groupName = String(user?.["報考群(類)名稱"] || "").trim();
     if (!groupCode || !groupName || !choicesSheet) {
+        return new Set();
+    }
+    if (choicesSheet.getLastColumn() < 1) {
         return new Set();
     }
     const headerRow = choicesSheet
