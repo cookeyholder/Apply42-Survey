@@ -245,6 +245,7 @@ function getStatisticsSnapshot() {
  */
 function getStatisticsSummaryData() {
     try {
+        getAuthorizedUserContext(["老師", "管理"], "statistics.summary.read");
         const cached = getCacheData(STATS_CACHE_KEYS.summary);
         if (cached) {
             return cached;
@@ -306,6 +307,10 @@ function getStatisticsSummaryData() {
  */
 function getStatisticsGroupDetail(groupName, page = 1, pageSize = 10) {
     try {
+        getAuthorizedUserContext(
+            ["老師", "管理"],
+            "statistics.group-detail.read",
+        );
         const safeGroupName = String(groupName || "").trim();
         if (!safeGroupName) {
             return { error: "請提供群類名稱。" };
@@ -412,6 +417,7 @@ function getStatisticsPerformanceConfig() {
  */
 function getRawStatisticsData() {
     try {
+        getAuthorizedUserContext(["老師", "管理"], "statistics.raw.read");
         const cachedData = getCacheData(CACHE_KEYS.STATISTICS_RAW_DATA);
         if (cachedData) {
             return cachedData;
@@ -453,6 +459,10 @@ function getRawStatisticsData() {
  */
 function getUniqueGroupNames() {
     try {
+        getAuthorizedUserContext(
+            ["老師", "管理"],
+            "statistics.group-names.read",
+        );
         const cachedData = getCacheData(CACHE_KEYS.STATISTICS_GROUP_NAMES);
         if (cachedData) {
             return cachedData;
