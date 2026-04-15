@@ -20,10 +20,10 @@
 
 ## 4. 中優先修補：郵件去重（P2）
 
-- [ ] 4.1 開啟 `mail.gs`，在 `sendResultNotificationEmail()` 函式頂端計算去重 hash：`const dedupKey = 'mail_dedup_' + sha256Hex(recipientEmail + JSON.stringify([...choices].sort()))`
-- [ ] 4.2 在計算 hash 後，查詢 CacheService：`if (CacheService.getScriptCache().get(dedupKey)) return;`，命中時直接回傳不寄信
-- [ ] 4.3 在成功呼叫寄信 API 後，寫入去重快取：`CacheService.getScriptCache().put(dedupKey, '1', 600)`（TTL 600 秒）
-- [ ] 4.4 確認 `sha256Hex()` 工具函式已在 `utilities.gs` 定義且可在 `mail.gs` 中使用（GAS 全域範疇，通常不需 import）
+- [x] 4.1 開啟 `mail.gs`，在 `sendResultNotificationEmail()` 函式頂端計算去重 hash：`const dedupKey = 'mail_dedup_' + sha256Hex(recipientEmail + JSON.stringify([...choices].sort()))`
+- [x] 4.2 在計算 hash 後，查詢 CacheService：`if (CacheService.getScriptCache().get(dedupKey)) return;`，命中時直接回傳不寄信
+- [x] 4.3 在成功呼叫寄信 API 後，寫入去重快取：`CacheService.getScriptCache().put(dedupKey, '1', 600)`（TTL 600 秒）
+- [x] 4.4 確認 `sha256Hex()` 工具函式已在 `utilities.gs` 定義且可在 `mail.gs` 中使用（GAS 全域範雇，通常不需 import）
 
 ## 5. 驗證與整合確認
 
