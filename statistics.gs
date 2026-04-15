@@ -119,7 +119,7 @@ function getStatisticsVersion(generatedAt) {
 }
 
 function getStatisticsSnapshot() {
-    getAuthorizedUserContext(["老師", "管理"], "statistics.snapshot.read");
+    getAuthorizedUserContext(["老師"], "statistics.snapshot.read");
     const cached = getCacheData(STATS_CACHE_KEYS.snapshot);
     if (cached) {
         return cached;
@@ -247,7 +247,7 @@ function getStatisticsSnapshot() {
 function getStatisticsSummaryData() {
     try {
         const context = getAuthorizedUserContext(
-            ["老師", "管理"],
+            ["老師"],
             "statistics.summary.read",
         );
         assertRateLimit("statistics.summary.read", context.sessionEmail, 30);
@@ -313,7 +313,7 @@ function getStatisticsSummaryData() {
 function getStatisticsGroupDetail(groupName, page = 1, pageSize = 10) {
     try {
         const context = getAuthorizedUserContext(
-            ["老師", "管理"],
+            ["老師"],
             "statistics.group-detail.read",
         );
         assertRateLimit("statistics.group-detail.read", context.sessionEmail, 40);
@@ -423,7 +423,7 @@ function getStatisticsPerformanceConfig() {
  */
 function getRawStatisticsData() {
     try {
-        getAuthorizedUserContext(["老師", "管理"], "statistics.raw.read");
+        getAuthorizedUserContext(["老師"], "statistics.raw.read");
         const cachedData = getCacheData(CACHE_KEYS.STATISTICS_RAW_DATA);
         if (cachedData) {
             return cachedData;
@@ -466,7 +466,7 @@ function getRawStatisticsData() {
 function getUniqueGroupNames() {
     try {
         getAuthorizedUserContext(
-            ["老師", "管理"],
+            ["老師"],
             "statistics.group-names.read",
         );
         const cachedData = getCacheData(CACHE_KEYS.STATISTICS_GROUP_NAMES);

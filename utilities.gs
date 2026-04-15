@@ -279,7 +279,7 @@ function validateRequestParameters(configs) {
  */
 function exportCsv() {
   try {
-    const context = getAuthorizedUserContext(["老師", "管理"], "export.csv");
+    const context = getAuthorizedUserContext(["老師"], "export.csv");
     assertRateLimit("export.csv", context.sessionEmail, 10);
     logSecurityEvent("export_csv_requested", {
       sessionEmail: context.sessionEmail,

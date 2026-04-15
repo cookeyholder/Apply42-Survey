@@ -49,17 +49,13 @@ function resolveUserRole(user) {
     }
 
     const directRole = String(user.userType || "").trim();
-    if (directRole === "學生" || directRole === "老師" || directRole === "管理") {
+    if (directRole === "學生" || directRole === "老師") {
         return directRole;
     }
 
     const roleField = String(user["角色"] || "").trim();
-    if (roleField === "學生" || roleField === "老師" || roleField === "管理") {
+    if (roleField === "學生" || roleField === "老師") {
         return roleField;
-    }
-
-    if (String(user["是否管理員"] || "").trim() === "是") {
-        return "管理";
     }
 
     return "";

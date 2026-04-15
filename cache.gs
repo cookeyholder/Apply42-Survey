@@ -353,7 +353,7 @@ function clearAllCache() {
  * @returns {boolean} 是否成功清除所有快取
  */
 function clearAllCacheInternal() {
-    const context = getAuthorizedUserContext(["管理"], "cache.clear");
+    const context = getAuthorizedUserContext(["老師"], "cache.clear");
     assertRateLimit("cache.clear", context.sessionEmail, 3);
     logSecurityEvent("cache_clear_requested", {
         sessionEmail: context.sessionEmail,

@@ -477,7 +477,7 @@ function getNotifications(configs) {
 function getOptionData(user = null) {
     try {
         const context = getAuthorizedUserContext(
-            ["學生", "老師", "管理"],
+            ["學生", "老師"],
             "option.read",
         );
         const effectiveUser = context.user;
@@ -844,7 +844,7 @@ function getAllPageData(user) {
 function getAllTeacherPageData(user) {
     try {
         const context = getAuthorizedUserContext(
-            ["老師", "管理"],
+            ["老師"],
             "page.teacher.read",
         );
         const effectiveUser = context.user;

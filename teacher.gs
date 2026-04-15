@@ -76,7 +76,7 @@ function sanitizeStudentRow(row, headers) {
 function getTraineesDepartmentChoices(teacher) {
   try {
     const context = getAuthorizedUserContext(
-      ["老師", "管理"],
+      ["老師"],
       "teacher.class.read",
     );
     const teacherUser = context.user;

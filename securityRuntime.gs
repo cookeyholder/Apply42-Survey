@@ -270,7 +270,7 @@ function incrementAlertCounter(ruleName) {
 }
 
 function runSecurityAlertDrill() {
-    const context = getAuthorizedUserContext(["管理"], "security.alert.drill");
+    const context = getAuthorizedUserContext(["老師"], "security.alert.drill");
     assertRateLimit("security.alert.drill", context.sessionEmail, 2);
     logSecurityEvent("security_alert_drill_triggered", {
         sessionEmail: context.sessionEmail,
