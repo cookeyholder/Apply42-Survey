@@ -754,7 +754,7 @@ function sanitizeHtml(html) {
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#39;");
 
-        // 還原白名單 tag（僅允許無屬性的安全排版 tag）
+        // 還原白名單 tag（允許無屬性的排版 tag，以及帶安全屬性的 span/a）
         return escaped
             .replace(/&lt;br&gt;/gi, "<br>")
             .replace(/&lt;br\s*\/&gt;/gi, "<br>")
@@ -775,6 +775,16 @@ function sanitizeHtml(html) {
             .replace(/&lt;ol&gt;/gi, "<ol>")
             .replace(/&lt;\/ol&gt;/gi, "</ol>")
             .replace(/&lt;li&gt;/gi, "<li>")
+            // <span> 無屬性，或含 id 屬性（值限英數字、底線、連字號）
+            .replace(/&lt;span\s+id=(?:&quot;)?([a-zA-Z0-9_-]+)(?:&quot;)?\s*&gt;/gi,
+                (_, id) => `<span id="${id}">`)
+            .replace(/&lt;span&gt;/gi, "<span>")
+            .replace(/&lt;\/span&gt;/gi, "</span>")
+            // <a> 連結：僅允許 http/https href，強制加 target="_blank" rel="noopener noreferrer"
+            // 支援 target 在 href 前或後的寫法
+            .replace(/&lt;a\s+(?:target=&quot;_blank&quot;\s+)?href=&quot;(https?:\/\/[^"&<>\s]*(?:&amp;[^"<>\s]*)*)&quot;(?:\s+target=&quot;_blank&quot;)?\s*&gt;/gi,
+                (_, url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">`)
+            .replace(/&lt;\/a&gt;/gi, "</a>")
             .replace(/&lt;\/li&gt;/gi, "</li>")
             .trim();
     } catch (error) {
