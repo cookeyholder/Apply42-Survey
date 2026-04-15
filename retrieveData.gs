@@ -757,6 +757,9 @@ function sanitizeHtml(html) {
         // 還原白名單 tag（僅允許無屬性的安全排版 tag）
         return escaped
             .replace(/&lt;br&gt;/gi, "<br>")
+            .replace(/&lt;br\s*\/&gt;/gi, "<br>")
+            .replace(/&lt;p&gt;/gi, "<p>")
+            .replace(/&lt;\/p&gt;/gi, "</p>")
             .replace(/&lt;b&gt;/gi, "<b>")
             .replace(/&lt;\/b&gt;/gi, "</b>")
             .replace(/&lt;strong&gt;/gi, "<strong>")
@@ -765,6 +768,14 @@ function sanitizeHtml(html) {
             .replace(/&lt;\/em&gt;/gi, "</em>")
             .replace(/&lt;i&gt;/gi, "<i>")
             .replace(/&lt;\/i&gt;/gi, "</i>")
+            .replace(/&lt;u&gt;/gi, "<u>")
+            .replace(/&lt;\/u&gt;/gi, "</u>")
+            .replace(/&lt;ul&gt;/gi, "<ul>")
+            .replace(/&lt;\/ul&gt;/gi, "</ul>")
+            .replace(/&lt;ol&gt;/gi, "<ol>")
+            .replace(/&lt;\/ol&gt;/gi, "</ol>")
+            .replace(/&lt;li&gt;/gi, "<li>")
+            .replace(/&lt;\/li&gt;/gi, "</li>")
             .trim();
     } catch (error) {
         Logger.log("sanitizeHtml() 發生錯誤：%s", error.message);
