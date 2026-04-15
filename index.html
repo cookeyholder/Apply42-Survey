@@ -348,10 +348,6 @@
                     <div class="card-body">
                         <!-- <h5 class="card-title text-center">是否參加集體報名</h5>-->
                         <form id="isJoinedForm" method="POST" action="#">
-                            <input type="hidden" id="csrfTokenFormA" name="csrfToken" value="" />
-                            <input type="hidden" id="csrfNonceFormA" name="csrfNonce" value="" />
-                            <input type="hidden" id="requestTsFormA" name="requestTs" value="" />
-                            <input type="hidden" id="requestOriginFormA" name="requestOrigin" value="" />
                             <!-- 改用 switch -->
                             <div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox"
                                     id="isJoinedSwitch" name="isJoinedInput"><label class="form-check-label"
@@ -367,10 +363,6 @@
                         <form id="departmentChoicesForm" method="POST" action="#">
                             <!-- 新增隱藏欄位，同步 switch 值 --><input type="hidden" id="isJoinedInput" name="isJoinedInput"
                                 value="否" />
-                            <input type="hidden" id="csrfTokenFormB" name="csrfToken" value="" />
-                            <input type="hidden" id="csrfNonceFormB" name="csrfNonce" value="" />
-                            <input type="hidden" id="requestTsFormB" name="requestTs" value="" />
-                            <input type="hidden" id="requestOriginFormB" name="requestOrigin" value="" />
                             <div id="choiceValidationSummary" class="alert alert-danger validation-summary" role="alert"
                                 aria-live="assertive"></div>
                             <div>報名費用： <span id="registrationFee"></span>元。 <ul>
@@ -537,7 +529,6 @@
             departmentOptions = [],
             loginEmail = '',
             serviceUrl = '',
-            requestSecurity = {},
             wishesReceivedMessage = ''
         } = pageData;
 
@@ -783,21 +774,6 @@
             // 表單 action
             document.getElementById('isJoinedForm').action = serviceUrl;
             document.getElementById('departmentChoicesForm').action = serviceUrl;
-
-            const resolvedOrigin = window.location.origin || requestSecurity.serviceOrigin || '';
-            const csrfToken = requestSecurity.csrfToken || '';
-            const csrfNonce = requestSecurity.csrfNonce || '';
-            const requestTs = requestSecurity.requestTs || '';
-            ['A', 'B'].forEach(suffix => {
-                const tokenInput = document.getElementById(`csrfTokenForm${suffix}`);
-                const nonceInput = document.getElementById(`csrfNonceForm${suffix}`);
-                const tsInput = document.getElementById(`requestTsForm${suffix}`);
-                const originInput = document.getElementById(`requestOriginForm${suffix}`);
-                if (tokenInput) tokenInput.value = csrfToken;
-                if (nonceInput) nonceInput.value = csrfNonce;
-                if (tsInput) tsInput.value = requestTs;
-                if (originInput) originInput.value = resolvedOrigin;
-            });
 
             // Modal 連結
             const expiredModalLink = document.getElementById('expiredModalLink');

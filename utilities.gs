@@ -279,12 +279,6 @@ function validateRequestParameters(configs) {
  */
 function exportCsv() {
   try {
-    const context = getAuthorizedUserContext(["老師", "管理"], "export.csv");
-    assertRateLimit("export.csv", context.sessionEmail, 10);
-    logSecurityEvent("export_csv_requested", {
-      sessionEmail: context.sessionEmail,
-    });
-
     // 驗證權限和工作表
     if (!forImportSheet) {
       throw new Error("(exportCsv)匯入報名系統工作表不存在");
@@ -396,9 +390,6 @@ function exportCsv() {
     return fileUrl;
   } catch (error) {
     Logger.log("(exportCsv)發生錯誤：%s", error.message);
-    logSecurityEvent("export_csv_failed", {
-      message: error.message,
-    });
 
     try {
       const ui = SpreadsheetApp.getUi();
@@ -505,16 +496,5 @@ function getSafeKeyFromEmail(email) {
   if (!email || typeof email !== "string") {
     return "";
   }
-  const normalized = email.trim().toLowerCase();
-  if (!normalized) return "";
-  const digest = Utilities.computeDigest(
-    Utilities.DigestAlgorithm.SHA_256,
-    normalized,
-    Utilities.Charset.UTF_8
-  );
-  const hex = digest
-    .map((byte) => (byte < 0 ? byte + 256 : byte))
-    .map((value) => value.toString(16).padStart(2, "0"))
-    .join("");
-  return `u_${hex.slice(0, 24)}`;
+  return email.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
