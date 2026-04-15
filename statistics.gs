@@ -2,9 +2,8 @@
  * @description 顯示統計頁面
  */
 function showStatisticsPage() {
-    let htmlOutput = HtmlService.createHtmlOutputFromFile(
-        "statisticsTemplate.html",
-    )
+    let htmlOutput = HtmlService.createTemplateFromFile("statisticsTemplate.html")
+        .evaluate()
         .setWidth(900)
         .setHeight(700);
     htmlOutput = setXFrameOptionsSafely(htmlOutput); // Use the existing safe wrapper
