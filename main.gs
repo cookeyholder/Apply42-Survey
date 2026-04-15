@@ -222,8 +222,9 @@ function doPost(request) {
 
         Logger.log("(doPost)請求參數：%s", JSON.stringify(request.parameters));
 
-        const user = getUserData();
-        if (!user || !user["統一入學測驗報名序號"]) {
+        const context = getAuthorizedUserContext(["學生"], "submission.write");
+        const user = context.user;
+        if (!user["統一入學測驗報名序號"]) {
             Logger.log("(doPost)無效的使用者或非學生帳號嘗試提交");
             return ContentService.createTextOutput("存取被拒絕").setMimeType(
                 ContentService.MimeType.TEXT,
@@ -297,7 +298,7 @@ function doPost(request) {
         }
 
         // 更新資料
-        const userEmail = Session.getActiveUser().getEmail();
+        const userEmail = context.sessionEmail;
         const row = findValueRow(userEmail, studentChoiceSheet);
 
         if (!row || row === 0) {
