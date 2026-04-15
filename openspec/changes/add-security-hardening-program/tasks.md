@@ -43,8 +43,8 @@
   - [x] 快取鍵隔離可防止跨使用者資料命中
   - [x] 覆蓋「同帳號合法更新/跨帳號污染阻擋/快取隔離」測試案例
 
-- [ ] 5.7 實作 `add-security-observability-throttling`（Step 4, P1，需在 5.6 完成後）
-- [ ] 5.8 驗收 `add-security-observability-throttling`
-  - [ ] 異常高頻請求可被節流或封鎖
-  - [ ] 安全事件可追蹤來源、身分、時間序列
-  - [ ] 覆蓋「正常流量不誤殺/異常流量被限制/告警觸發」測試案例
+- [x] 5.7 實作 `add-security-observability-throttling`（Step 4, P1，需在 5.6 完成後）
+- [x] 5.8 驗收 `add-security-observability-throttling`
+  - [x] 異常高頻請求可被節流或封鎖
+  - [x] 安全事件可追蹤來源、身分、時間序列
+  - [x] 覆蓋「正常流量不誤殺/異常流量被限制/告警觸發」測試案例

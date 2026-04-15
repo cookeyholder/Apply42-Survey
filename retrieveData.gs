@@ -307,10 +307,12 @@ function buildUserDataObject(targetSheet, userRow, userType) {
         }, {});
 
         userData.userType = userType;
-        Logger.log(
-            "(buildUserDataObject)成功建立使用者資料物件：%s",
-            JSON.stringify(userData),
-        );
+        if (userData["信箱"]) {
+            Logger.log(
+                "(buildUserDataObject)成功建立使用者資料物件：%s",
+                maskEmail(userData["信箱"]),
+            );
+        }
         return userData;
     } catch (error) {
         Logger.log(
