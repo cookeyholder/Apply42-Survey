@@ -21,7 +21,7 @@
 - [x] 4.1 確認 `add-server-side-rbac-guards` 已併入 `main`
 - [x] 4.2 由最新 `main` 建立本子提案專屬開發分支
 - [x] 4.3 開發完成後執行 `$code-review-and-quality` 與 `$security-and-hardening`
-- [x] 4.4 開啟 PR 並執行 `$review-pr-3x`，完成所有審查修正後 `$squash-pr`
+- [ ] 4.4 開啟 PR 並執行 `$review-pr-3x`，完成所有審查修正後 `$squash-pr`
 
 ## 5. 高頻提交與 TDD
 
