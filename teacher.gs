@@ -75,14 +75,8 @@ function sanitizeStudentRow(row, headers) {
  */
 function getTraineesDepartmentChoices(teacher) {
   try {
-    const context = getAuthorizedUserContext(
-      ["老師", "管理"],
-      "teacher.class.read",
-    );
-    const teacherUser = context.user;
-
-    // 驗證老師資料（以伺服器端身分為準）
-    if (!validateTeacherData(teacherUser)) {
+    // 驗證老師資料
+    if (!validateTeacherData(teacher)) {
       throw new Error("(getTraineesDepartmentChoices)老師資料驗證失敗");
     }
 
@@ -90,26 +84,10 @@ function getTraineesDepartmentChoices(teacher) {
       throw new Error("(getTraineesDepartmentChoices)考生志願列表工作表不存在");
     }
 
-    const authorizedClassNames = getTeacherAuthorizedClasses(teacherUser);
-    if (!authorizedClassNames || authorizedClassNames.length === 0) {
+    const classNames = teacher["班級"].toString().trim().split(",").map(name => name.trim());
+    if (!classNames || classNames.length === 0) {
       throw new Error("(getTraineesDepartmentChoices)班級名稱不能為空");
     }
-
-    let requestedClassNames = [...authorizedClassNames];
-    if (teacher && typeof teacher === "object" && teacher["班級"]) {
-      requestedClassNames = String(teacher["班級"])
-        .split(",")
-        .map((name) => name.trim())
-        .filter((name) => name !== "");
-      if (requestedClassNames.length === 0) {
-        requestedClassNames = [...authorizedClassNames];
-      }
-    }
-    assertTeacherClassScope(
-      requestedClassNames,
-      authorizedClassNames,
-      context.sessionEmail,
-    );
 
     // 安全地取得工作表資料
     const sheetData = getSheetDataSafely(
@@ -156,9 +134,7 @@ function getTraineesDepartmentChoices(teacher) {
     // 篩選出該班級的學生資料
     const classStudents = data.filter((row) => {
       const rowclassName = row[fieldIndexes.classIndex];
-      return (
-        rowclassName && requestedClassNames.includes(rowclassName.toString().trim())
-      );
+      return rowclassName && classNames.includes(rowclassName.toString().trim());
     });
 
     // 檢查班級大小
@@ -214,7 +190,7 @@ function getTraineesDepartmentChoices(teacher) {
 
     Logger.log(
       "成功取得班級 %s 的學生資料，共 %d 人",
-      requestedClassNames,
+      classNames,
       processedData.length
     );
 

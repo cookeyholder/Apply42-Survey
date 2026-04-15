@@ -174,7 +174,6 @@ function getUserFromCache(email) {
     try {
         const validEmailCacheKey = getSafeKeyFromEmail(email);
         const cacheKey = CACHE_KEYS.USER_DATA_PREFIX + validEmailCacheKey;
-        const bindKey = `${CACHE_KEYS.USER_DATA_PREFIX}bind_${validEmailCacheKey}`;
 
         if (!isValidCacheKey(cacheKey)) {
             Logger.log("(getUserFromCache)生成的快取鍵值無效：%s", cacheKey);
@@ -182,34 +181,8 @@ function getUserFromCache(email) {
         }
 
         const cached = getCacheData(cacheKey);
-        const bindInfo = getCacheData(bindKey);
-        if (bindInfo && bindInfo.email) {
-            const bindEmail = String(bindInfo.email).trim().toLowerCase();
-            const requestedEmail = String(email).trim().toLowerCase();
-            if (bindEmail !== requestedEmail) {
-                logSecurityEvent("cache_key_collision_detected", {
-                    userEmail: email,
-                    bindEmail,
-                    cacheKey,
-                });
-                cleanupCache(cacheKey);
-                cleanupCache(bindKey);
-                return null;
-            }
-        }
 
         if (cached) {
-            const cachedEmail = String(cached["信箱"] || "").trim().toLowerCase();
-            const requestedEmail = String(email).trim().toLowerCase();
-            if (cachedEmail && cachedEmail !== requestedEmail) {
-                logSecurityEvent("cache_identity_mismatch", {
-                    userEmail: email,
-                    cachedEmail,
-                    cacheKey,
-                });
-                cleanupCache(cacheKey);
-                return null;
-            }
             Logger.log("(getUserFromCache)從快取取得使用者資料：%s", email);
             return cached;
         }
@@ -307,12 +280,10 @@ function buildUserDataObject(targetSheet, userRow, userType) {
         }, {});
 
         userData.userType = userType;
-        if (userData["信箱"]) {
-            Logger.log(
-                "(buildUserDataObject)成功建立使用者資料物件：%s",
-                maskEmail(userData["信箱"]),
-            );
-        }
+        Logger.log(
+            "(buildUserDataObject)成功建立使用者資料物件：%s",
+            JSON.stringify(userData),
+        );
         return userData;
     } catch (error) {
         Logger.log(
@@ -370,14 +341,6 @@ function getUserData() {
         setCacheData(
             CACHE_KEYS.USER_DATA_PREFIX + validEmailCacheKey,
             userDataObject,
-            86400,
-        );
-        setCacheData(
-            `${CACHE_KEYS.USER_DATA_PREFIX}bind_${validEmailCacheKey}`,
-            {
-                email: String(email).trim().toLowerCase(),
-                at: new Date().toISOString(),
-            },
             86400,
         );
         Logger.log("(getUserData)成功取得並快取使用者資料：%s", email);
@@ -475,28 +438,11 @@ function getNotifications(configs) {
  */
 function getOptionData(user = null) {
     try {
-        const context = getAuthorizedUserContext(
-            ["學生", "老師", "管理"],
-            "option.read",
-        );
-        const effectiveUser = context.user;
-
-        if (user && user["信箱"] && user["信箱"] !== effectiveUser["信箱"]) {
-            logAuthorizationDenial({
-                code: AUTH_ERROR_CODES.FORBIDDEN,
-                resource: "option.read",
-                sessionEmail: context.sessionEmail,
-                requestedUserEmail: String(user["信箱"]),
-                effectiveUserEmail: String(effectiveUser["信箱"] || ""),
-                reason: "ignore_client_identity_context",
-            });
+        if (!user) {
+            user = getUserData();
         }
 
-        if (
-            !effectiveUser ||
-            !effectiveUser["報考群(類)代碼"] ||
-            !effectiveUser["報考群(類)名稱"]
-        ) {
+        if (!user || !user["報考群(類)代碼"] || !user["報考群(類)名稱"]) {
             Logger.log("getOptionData: 使用者資料不完整");
             return {
                 isJoined: false,
@@ -546,8 +492,8 @@ function getOptionData(user = null) {
         }
 
         // 尋找對應的群類欄位
-        const groupCode = String(effectiveUser["報考群(類)代碼"]).padStart(2, "0");
-        const groupName = String(effectiveUser["報考群(類)名稱"]);
+        const groupCode = String(user["報考群(類)代碼"]).padStart(2, "0");
+        const groupName = String(user["報考群(類)名稱"]);
         const targetColumn = groupCode + groupName;
 
         const groupIndex = choicesData.headers.indexOf(targetColumn);
@@ -563,8 +509,7 @@ function getOptionData(user = null) {
         // 取得學生選擇資料（只讀取必要列，避免全表掃描）
         let studentHeaders = null;
         let studentRow = null;
-        const userEmail =
-            String(effectiveUser["信箱"] || "").trim() || context.sessionEmail;
+        const userEmail = user["信箱"] || Session.getActiveUser().getEmail();
 
         if (studentChoiceSheet) {
             try {
@@ -765,39 +710,21 @@ function sanitizeHtml(html) {
  */
 function getAllPageData(user) {
     try {
-        const context = getAuthorizedUserContext(["學生"], "page.student.read");
-        const effectiveUser = context.user;
-
-        if (user && user["信箱"] && user["信箱"] !== effectiveUser["信箱"]) {
-            logAuthorizationDenial({
-                code: AUTH_ERROR_CODES.FORBIDDEN,
-                resource: "page.student.read",
-                sessionEmail: context.sessionEmail,
-                requestedUserEmail: String(user["信箱"]),
-                effectiveUserEmail: String(effectiveUser["信箱"] || ""),
-                reason: "ignore_client_identity_context",
-            });
-        }
-
         const configs = getConfigs();
         const notifications = getNotifications(configs);
         const limitOfSchools = getLimitOfSchools();
-        const optionData = getOptionData(effectiveUser);
-        const requestSecurity = issueSubmissionSecurityContext(
-            context.sessionEmail,
-        );
+        const optionData = getOptionData(user);
 
         const pageData = {
-            user: effectiveUser,
+            user: user,
             configs: configs,
             notifications: notifications,
             limitOfSchools: limitOfSchools,
             isJoined: optionData.isJoined,
             selectedChoices: optionData.selectedChoices,
             departmentOptions: optionData.departmentOptions,
-            loginEmail: context.sessionEmail,
+            loginEmail: Session.getActiveUser().getEmail(),
             serviceUrl: getServiceUrl(),
-            requestSecurity,
         };
 
         Logger.log("(getAllPageData)成功批次取得頁面資料");
@@ -818,30 +745,13 @@ function getAllPageData(user) {
  */
 function getAllTeacherPageData(user) {
     try {
-        const context = getAuthorizedUserContext(
-            ["老師", "管理"],
-            "page.teacher.read",
-        );
-        const effectiveUser = context.user;
-
-        if (user && user["信箱"] && user["信箱"] !== effectiveUser["信箱"]) {
-            logAuthorizationDenial({
-                code: AUTH_ERROR_CODES.FORBIDDEN,
-                resource: "page.teacher.read",
-                sessionEmail: context.sessionEmail,
-                requestedUserEmail: String(user["信箱"]),
-                effectiveUserEmail: String(effectiveUser["信箱"] || ""),
-                reason: "ignore_client_identity_context",
-            });
-        }
-
         const configs = getConfigs();
-        const studentData = getTraineesDepartmentChoices(effectiveUser);
+        const studentData = getTraineesDepartmentChoices(user);
 
         const pageData = {
-            user: effectiveUser,
+            user: user,
             configs: configs,
-            loginEmail: context.sessionEmail,
+            loginEmail: Session.getActiveUser().getEmail(),
             serviceUrl: getServiceUrl(),
             headers: studentData.headers,
             data: studentData.data,
