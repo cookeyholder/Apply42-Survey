@@ -119,6 +119,7 @@ function getStatisticsVersion(generatedAt) {
 }
 
 function getStatisticsSnapshot() {
+    getAuthorizedUserContext(["老師", "管理"], "statistics.snapshot.read");
     const cached = getCacheData(STATS_CACHE_KEYS.snapshot);
     if (cached) {
         return cached;

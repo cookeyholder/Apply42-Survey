@@ -100,35 +100,11 @@ function doGet(request) {
     } catch (err) {
         Logger.log("(doGet)發生錯誤：%s\n%s", err.message, err.stack);
 
-        // 轉義 HTML 特殊字符以防止 XSS
-        const escapeHtml = (text) => {
-            return text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#x27;");
-        };
-
         return HtmlService.createHtmlOutput(`
             <div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;">
                 <h2 style="color: #d32f2f;">系統錯誤</h2>
                 <p>很抱歉，系統發生錯誤，請稍後再試。</p>
-                <p style="color: #666; font-size: 0.9em;">錯誤時間：${new Date().toLocaleString(
-                    "zh-TW",
-                )}</p>
-                <div style="margin-top: 20px; padding: 10px; background-color: #f5f5f5; border-left: 4px solid #d32f2f; text-align: left;">
-                    <h3 style="color: #d32f2f; margin-top: 0;">錯誤詳情：</h3>
-                    <p><strong>錯誤訊息：</strong> ${escapeHtml(
-                        err.message || "未知錯誤",
-                    )}</p>
-                    <details style="margin-top: 10px;">
-                        <summary style="cursor: pointer; color: #666;">顯示詳細堆疊資訊</summary>
-                        <pre style="background-color: #fff; padding: 10px; border: 1px solid #ddd; margin-top: 10px; font-size: 12px; overflow: auto;">${escapeHtml(
-                            err.stack || "無堆疊資訊",
-                        )}</pre>
-                    </details>
-                </div>
+                <p style="color: #666; font-size: 0.9em;">錯誤時間：${new Date().toLocaleString("zh-TW")}</p>
             </div>
         `);
     }

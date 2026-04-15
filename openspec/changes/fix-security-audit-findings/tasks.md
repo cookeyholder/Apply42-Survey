@@ -1,9 +1,9 @@
 ## 1. 高優先修補：伺服端授權與資訊外洩（P0）
 
-- [ ] 1.1 開啟 `statistics.gs`，在 `getStatisticsSnapshot()` 函式第一行加入 `getAuthorizedUserContext(["老師", "管理"], "statistics.snapshot.read")`（與 `getStatisticsSummaryData()` 呼叫模式一致）
-- [ ] 1.2 搜尋所有呼叫 `getStatisticsSnapshot` 的程式碼路徑（含 HTML 檔案），確認每個呼叫端均在老師/管理角色情境下，不存在學生角色合法呼叫路徑
-- [ ] 1.3 開啟 `main.gs`，找到 `doGet` catch 區塊中的 `<details>` 標籤段落，移除整個 `<details>...</details>` 揭露 `err.stack` 的 HTML 區塊，確保只保留通用錯誤訊息給前端
-- [ ] 1.4 確認 `main.gs` 的 `doGet` 錯誤路徑有呼叫 `Logger.log(err)` 或等效記錄確保 stack trace 保留在後端日誌
+- [x] 1.1 開啟 `statistics.gs`，在 `getStatisticsSnapshot()` 函式第一行加入 `getAuthorizedUserContext(["老師", "管理"], "statistics.snapshot.read")`（與 `getStatisticsSummaryData()` 呼叫模式一致）
+- [x] 1.2 搜尋所有呼叫 `getStatisticsSnapshot` 的程式碼路徑（含 HTML 檔案），確認每個呼叫端均在老師/管理角色情境下，不存在學生角色合法呼叫路徑
+- [x] 1.3 開啟 `main.gs`，找到 `doGet` catch 區塊中的 `<details>` 標籤段落，移除整個 `<details>...</details>` 揭露 `err.stack` 的 HTML 區塊，確保只保留通用錯誤訊息給前端
+- [x] 1.4 確認 `main.gs` 的 `doGet` 錯誤路徑有呼叫 `Logger.log(err)` 或等效記錄確保 stack trace 保留在後端日誌
 
 ## 2. 中優先修補：前端 XSS 防護（P1-A）
 
