@@ -10,9 +10,10 @@
 function sendResultNotificationEmail(user, toEmail, wishes, submissionTime, configs) {
   try {
     // 去重保護：相同收件人與志願清單在 10 分鐘內不重複寄信
-    const dedupKey = 'mail_dedup_' + toSha256Hex(toEmail + JSON.stringify([...wishes].sort()));
+    const normalizedEmail = String(toEmail || '').trim().toLowerCase();
+    const dedupKey = 'mail_dedup_' + toSha256Hex(normalizedEmail + JSON.stringify([...wishes].sort()));
     if (CacheService.getScriptCache().get(dedupKey)) {
-      Logger.log("郵件去重命中，跳過重複寄信給 %s", toEmail);
+      Logger.log("郵件去重命中，跳過重複寄信給 %s", maskEmail(normalizedEmail));
       return true;
     }
 

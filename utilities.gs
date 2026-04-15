@@ -279,8 +279,9 @@ function validateRequestParameters(configs) {
  */
 function exportCsv() {
   try {
-    const callerEmail = Session.getActiveUser().getEmail();
-    logSecurityEvent("export_csv_requested", { sessionEmail: callerEmail });
+    const context = getAuthorizedUserContext(["老師"], "export.csv");
+    assertRateLimit("export.csv", context.sessionEmail, 5);
+    logSecurityEvent("export_csv_requested", { sessionEmail: context.sessionEmail });
 
     // 驗證權限和工作表
     if (!forImportSheet) {

@@ -123,6 +123,9 @@ function getStatisticsSnapshot() {
         return cached;
     }
 
+    // 快取未命中時，僅允許老師觸發完整快照讀取，防止學生直接 RPC 呼叫
+    getAuthorizedUserContext(["老師"], "statistics.snapshot.read");
+
     if (!studentChoiceSheet) {
         return { error: "「考生志願列表」工作表不存在，無法產生統計資料。" };
     }
@@ -421,6 +424,8 @@ function getStatisticsPerformanceConfig() {
  */
 function getRawStatisticsData() {
     try {
+        const context = getAuthorizedUserContext(["老師"], "statistics.raw.read");
+        assertRateLimit("statistics.raw.read", context.sessionEmail, 30);
         const cachedData = getCacheData(CACHE_KEYS.STATISTICS_RAW_DATA);
         if (cachedData) {
             return cachedData;
@@ -462,6 +467,8 @@ function getRawStatisticsData() {
  */
 function getUniqueGroupNames() {
     try {
+        const context = getAuthorizedUserContext(["老師"], "statistics.group-names.read");
+        assertRateLimit("statistics.group-names.read", context.sessionEmail, 30);
         const cachedData = getCacheData(CACHE_KEYS.STATISTICS_GROUP_NAMES);
         if (cachedData) {
             return cachedData;

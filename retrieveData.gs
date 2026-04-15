@@ -775,22 +775,21 @@ function sanitizeHtml(html) {
             .replace(/&lt;ol&gt;/gi, "<ol>")
             .replace(/&lt;\/ol&gt;/gi, "</ol>")
             .replace(/&lt;li&gt;/gi, "<li>")
+            .replace(/&lt;\/li&gt;/gi, "</li>")
             // <span> 無屬性，或含 id 屬性（值限英數字、底線、連字號）
             .replace(/&lt;span\s+id=(?:&quot;)?([a-zA-Z0-9_-]+)(?:&quot;)?\s*&gt;/gi,
                 (_, id) => `<span id="${id}">`)
             .replace(/&lt;span&gt;/gi, "<span>")
             .replace(/&lt;\/span&gt;/gi, "</span>")
-            // <a> 連結：匹配整個 &lt;a...&gt; 區塊，從 attrs 安全提取 href，僅允許 http/https
-            // 使用 callback 方式，避免複雜 regex 在 GAS V8 產生邊界問題
-            .replace(/&lt;a\b([\s\S]*?)&gt;/gi, function(match, attrs) {
+            // <a> 連結：成對比對 opening+closing tag，避免產生孤立的 </a>
+            // 僅允許 http/https href；不安全的 href 保留內文並移除標籤
+            .replace(/&lt;a\b([\s\S]*?)&gt;([\s\S]*?)&lt;\/a&gt;/gi, function(match, attrs, innerHtml) {
                 var decoded = attrs.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
                 var hrefMatch = decoded.match(/\bhref\s*=\s*"(https?:\/\/[^"]+)"/i) ||
                                 decoded.match(/\bhref\s*=\s*'(https?:\/\/[^']+)'/i);
-                if (!hrefMatch) { return ''; } // javascript: 或無 href，完全移除 tag
-                return '<a href="' + hrefMatch[1] + '" target="_blank" rel="noopener noreferrer">';
+                if (!hrefMatch) { return innerHtml; } // 不安全 href：移除標籤，保留內文
+                return '<a href="' + hrefMatch[1] + '" target="_blank" rel="noopener noreferrer">' + innerHtml + '</a>';
             })
-            .replace(/&lt;\/a&gt;/gi, "</a>")
-            .replace(/&lt;\/li&gt;/gi, "</li>")
             .trim();
     } catch (error) {
         Logger.log("sanitizeHtml() 發生錯誤：%s", error.message);
