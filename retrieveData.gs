@@ -174,6 +174,7 @@ function getUserFromCache(email) {
     try {
         const validEmailCacheKey = getSafeKeyFromEmail(email);
         const cacheKey = CACHE_KEYS.USER_DATA_PREFIX + validEmailCacheKey;
+        const bindKey = `${CACHE_KEYS.USER_DATA_PREFIX}bind_${validEmailCacheKey}`;
 
         if (!isValidCacheKey(cacheKey)) {
             Logger.log("(getUserFromCache)生成的快取鍵值無效：%s", cacheKey);
@@ -181,8 +182,34 @@ function getUserFromCache(email) {
         }
 
         const cached = getCacheData(cacheKey);
+        const bindInfo = getCacheData(bindKey);
+        if (bindInfo && bindInfo.email) {
+            const bindEmail = String(bindInfo.email).trim().toLowerCase();
+            const requestedEmail = String(email).trim().toLowerCase();
+            if (bindEmail !== requestedEmail) {
+                logSecurityEvent("cache_key_collision_detected", {
+                    userEmail: email,
+                    bindEmail,
+                    cacheKey,
+                });
+                cleanupCache(cacheKey);
+                cleanupCache(bindKey);
+                return null;
+            }
+        }
 
         if (cached) {
+            const cachedEmail = String(cached["信箱"] || "").trim().toLowerCase();
+            const requestedEmail = String(email).trim().toLowerCase();
+            if (cachedEmail && cachedEmail !== requestedEmail) {
+                logSecurityEvent("cache_identity_mismatch", {
+                    userEmail: email,
+                    cachedEmail,
+                    cacheKey,
+                });
+                cleanupCache(cacheKey);
+                return null;
+            }
             Logger.log("(getUserFromCache)從快取取得使用者資料：%s", email);
             return cached;
         }
@@ -280,10 +307,12 @@ function buildUserDataObject(targetSheet, userRow, userType) {
         }, {});
 
         userData.userType = userType;
-        Logger.log(
-            "(buildUserDataObject)成功建立使用者資料物件：%s",
-            JSON.stringify(userData),
-        );
+        if (userData["信箱"]) {
+            Logger.log(
+                "(buildUserDataObject)成功建立使用者資料物件：%s",
+                maskEmail(userData["信箱"]),
+            );
+        }
         return userData;
     } catch (error) {
         Logger.log(
@@ -341,6 +370,14 @@ function getUserData() {
         setCacheData(
             CACHE_KEYS.USER_DATA_PREFIX + validEmailCacheKey,
             userDataObject,
+            86400,
+        );
+        setCacheData(
+            `${CACHE_KEYS.USER_DATA_PREFIX}bind_${validEmailCacheKey}`,
+            {
+                email: String(email).trim().toLowerCase(),
+                at: new Date().toISOString(),
+            },
             86400,
         );
         Logger.log("(getUserData)成功取得並快取使用者資料：%s", email);
@@ -746,6 +783,9 @@ function getAllPageData(user) {
         const notifications = getNotifications(configs);
         const limitOfSchools = getLimitOfSchools();
         const optionData = getOptionData(effectiveUser);
+        const requestSecurity = issueSubmissionSecurityContext(
+            context.sessionEmail,
+        );
 
         const pageData = {
             user: effectiveUser,
@@ -757,6 +797,7 @@ function getAllPageData(user) {
             departmentOptions: optionData.departmentOptions,
             loginEmail: context.sessionEmail,
             serviceUrl: getServiceUrl(),
+            requestSecurity,
         };
 
         Logger.log("(getAllPageData)成功批次取得頁面資料");

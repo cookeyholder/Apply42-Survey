@@ -1,6 +1,6 @@
 // 快取相關常數和安全性設定
-const CACHE_EXPIRATION = 21600; // 快取時效 6 小時
-const MAX_CACHE_EXPIRATION = 86400; // 最大快取時效 24 小時
+const CACHE_EXPIRATION = 3600; // 快取時效 1 小時
+const MAX_CACHE_EXPIRATION = 10800; // 最大快取時效 3 小時
 const CHUNK_SIZE = 90000; // 每段約 90KB
 const MAX_CACHE_SIZE = 1000000; // 最大快取大小 1MB
 const MAX_CHUNKS = 50; // 最大分段數
@@ -353,6 +353,11 @@ function clearAllCache() {
  * @returns {boolean} 是否成功清除所有快取
  */
 function clearAllCacheInternal() {
+    const context = getAuthorizedUserContext(["管理"], "cache.clear");
+    assertRateLimit("cache.clear", context.sessionEmail, 3);
+    logSecurityEvent("cache_clear_requested", {
+        sessionEmail: context.sessionEmail,
+    });
     return clearAllCache(); // 呼叫本檔案中的 clearAllCache
 }
 
