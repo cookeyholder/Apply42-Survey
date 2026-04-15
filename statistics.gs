@@ -119,7 +119,6 @@ function getStatisticsVersion(generatedAt) {
 }
 
 function getStatisticsSnapshot() {
-    getAuthorizedUserContext(["老師"], "statistics.snapshot.read");
     const cached = getCacheData(STATS_CACHE_KEYS.snapshot);
     if (cached) {
         return cached;
@@ -423,7 +422,6 @@ function getStatisticsPerformanceConfig() {
  */
 function getRawStatisticsData() {
     try {
-        getAuthorizedUserContext(["老師"], "statistics.raw.read");
         const cachedData = getCacheData(CACHE_KEYS.STATISTICS_RAW_DATA);
         if (cachedData) {
             return cachedData;
@@ -465,10 +463,6 @@ function getRawStatisticsData() {
  */
 function getUniqueGroupNames() {
     try {
-        getAuthorizedUserContext(
-            ["老師"],
-            "statistics.group-names.read",
-        );
         const cachedData = getCacheData(CACHE_KEYS.STATISTICS_GROUP_NAMES);
         if (cachedData) {
             return cachedData;
