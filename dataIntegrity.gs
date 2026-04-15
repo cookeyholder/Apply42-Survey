@@ -1,16 +1,28 @@
-function findUniqueValueRows(keyword, targetRange) {
-    if (!keyword || !targetRange) return [];
+function findUniqueValueRows(keyword, targetSheet, headerName = "") {
+    if (!keyword || !targetSheet) return [];
     try {
-        let range = targetRange;
-        if (typeof targetRange.getDataRange === "function") {
-            range = targetRange.getDataRange();
+        let range = targetSheet;
+        if (typeof targetSheet.getDataRange === "function") {
+            if (typeof targetSheet.getLastColumn === "function" && targetSheet.getLastColumn() < 1) {
+                return [];
+            }
+            if (headerName) {
+                const targetCol = getHeaderIndex(targetSheet, headerName);
+                const lastRow = targetSheet.getLastRow();
+                if (targetCol < 1 || lastRow < 2) return [];
+                range = targetSheet.getRange(2, targetCol, lastRow - 1, 1);
+            } else {
+                range = targetSheet.getDataRange();
+            }
         }
         const cells = range
             .createTextFinder(String(keyword))
             .matchEntireCell(true)
             .matchCase(false)
             .findAll();
-        return Array.isArray(cells) ? cells.map((cell) => cell.getRow()) : [];
+        if (!Array.isArray(cells)) return [];
+        const rowSet = new Set(cells.map((cell) => Number(cell.getRow())));
+        return Array.from(rowSet).sort((a, b) => a - b);
     } catch (error) {
         Logger.log("(findUniqueValueRows)失敗：%s", error.message);
         return [];
@@ -18,7 +30,7 @@ function findUniqueValueRows(keyword, targetRange) {
 }
 
 function assertSingleStudentRowByEmail(email) {
-    const rows = findUniqueValueRows(email, studentChoiceSheet);
+    const rows = findUniqueValueRows(email, studentChoiceSheet, "信箱");
     if (rows.length !== 1) {
         logSecurityEvent("data_integrity_row_mismatch", {
             userEmail: email,
@@ -57,11 +69,41 @@ function detectDuplicateEmails(sheet) {
     }
 }
 
-function getAllowedDepartmentCodeSet(user) {
-    const optionData = getOptionData(user);
+function getAllowedDepartmentCodeSet(user, sessionEmail = "") {
+    const userEmail = String(user?.["信箱"] || "").trim().toLowerCase();
+    const normalizedSession = String(sessionEmail || "").trim().toLowerCase();
+    if (normalizedSession && userEmail && userEmail !== normalizedSession) {
+        throw createAuthorizationError(
+            AUTH_ERROR_CODES.FORBIDDEN,
+            "使用者身分驗證失敗",
+        );
+    }
+    const groupCode = String(user?.["報考群(類)代碼"] || "").padStart(2, "0");
+    const groupName = String(user?.["報考群(類)名稱"] || "").trim();
+    if (!groupCode || !groupName || !choicesSheet) {
+        return new Set();
+    }
+    if (choicesSheet.getLastColumn() < 1) {
+        return new Set();
+    }
+    const headerRow = choicesSheet
+        .getRange(1, 1, 1, choicesSheet.getLastColumn())
+        .getValues()[0];
+    const targetColumn = `${groupCode}${groupName}`;
+    const groupIndex = headerRow.indexOf(targetColumn);
+    if (groupIndex < 0) {
+        return new Set();
+    }
+    const choiceRows = Math.max(choicesSheet.getLastRow() - 1, 0);
+    if (choiceRows === 0) {
+        return new Set();
+    }
+    const choiceValues = choicesSheet
+        .getRange(2, groupIndex + 1, choiceRows, 1)
+        .getValues();
     const codeSet = new Set();
-    (optionData.departmentOptions || []).forEach((option) => {
-        const text = String(option || "").trim();
+    choiceValues.forEach((row) => {
+        const text = String(row[0] || "").trim();
         const match = text.match(/^(\d{6})/);
         if (match) {
             codeSet.add(match[1]);

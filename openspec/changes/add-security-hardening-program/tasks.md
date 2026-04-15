@@ -29,22 +29,22 @@
 - [x] 5.2 驗收 `add-server-side-rbac-guards`
   - [x] 未授權角色不得存取/寫入受保護資源
   - [x] 合法授權流程回歸測試全綠
-  - [x] 覆蓋「授權成功/授權失敗/越權存取」測試案例
+  - [x] 已以手動驗收/回歸確認「授權成功/授權失敗/越權存取」情境
 
 - [x] 5.3 實作 `add-csrf-replay-protection`（Step 2, P0，需在 5.2 完成後）
 - [x] 5.4 驗收 `add-csrf-replay-protection`
   - [x] 缺 token/無效 token/過期 token 一律拒絕
   - [x] 重放（nonce 重複）請求一律拒絕
-  - [x] 覆蓋「合法提交/CSRF 攻擊/重放攻擊」測試案例
+  - [x] 已以手動驗收/回歸確認「合法提交/CSRF 攻擊/重放攻擊」情境
 
 - [x] 5.5 實作 `add-data-integrity-cache-safety`（Step 3, P1，需在 5.4 完成後）
 - [x] 5.6 驗收 `add-data-integrity-cache-safety`
   - [x] A 使用者資料不得寫入 B 使用者上下文
   - [x] 快取鍵隔離可防止跨使用者資料命中
-  - [x] 覆蓋「同帳號合法更新/跨帳號污染阻擋/快取隔離」測試案例
+  - [x] 已以手動驗收/回歸確認「同帳號合法更新/跨帳號污染阻擋/快取隔離」情境
 
 - [x] 5.7 實作 `add-security-observability-throttling`（Step 4, P1，需在 5.6 完成後）
 - [x] 5.8 驗收 `add-security-observability-throttling`
   - [x] 異常高頻請求可被節流或封鎖
   - [x] 安全事件可追蹤來源、身分、時間序列
-  - [x] 覆蓋「正常流量不誤殺/異常流量被限制/告警觸發」測試案例
+  - [x] 已以手動驗收/回歸確認「正常流量不誤殺/異常流量被限制/告警觸發」情境

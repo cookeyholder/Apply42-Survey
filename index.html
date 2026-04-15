@@ -784,7 +784,7 @@
             document.getElementById('isJoinedForm').action = serviceUrl;
             document.getElementById('departmentChoicesForm').action = serviceUrl;
 
-            const resolvedOrigin = window.location.origin || requestSecurity.serviceOrigin || '';
+            const resolvedOrigin = requestSecurity.serviceOrigin || window.location.origin || '';
             const csrfToken = requestSecurity.csrfToken || '';
             const csrfNonce = requestSecurity.csrfNonce || '';
             const requestTs = requestSecurity.requestTs || '';

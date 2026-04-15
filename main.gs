@@ -233,7 +233,7 @@ function doPost(request) {
             );
         }
 
-        assertRateLimit("submission.write", context.sessionEmail, 12);
+        assertRateLimit("submission.write", context.sessionEmail);
         assertSubmissionSecurity(request, context.sessionEmail);
 
         const configs = getConfigs();
@@ -278,7 +278,10 @@ function doPost(request) {
 
         let departmentChoices = [];
         if (isJoined) {
-            const allowedCodes = getAllowedDepartmentCodeSet(user);
+            const allowedCodes = getAllowedDepartmentCodeSet(
+                user,
+                context.sessionEmail,
+            );
             // 取得並驗證志願選擇
             for (let i = 1; i <= limitOfChoices; i++) {
                 const choice = String(
@@ -306,18 +309,23 @@ function doPost(request) {
 
         // 更新資料
         const userEmail = context.sessionEmail;
-        const duplicateEmails = detectDuplicateEmails(studentChoiceSheet);
-        if (duplicateEmails.length > 0) {
-            logSecurityEvent("duplicate_email_detected", {
-                duplicates: duplicateEmails.slice(0, 5),
-            });
+        let row = 0;
+        try {
+            row = assertSingleStudentRowByEmail(userEmail);
+        } catch (rowError) {
+            const duplicateEmails = detectDuplicateEmails(studentChoiceSheet);
+            if (duplicateEmails.length > 0) {
+                logSecurityEvent("duplicate_email_detected", {
+                    duplicates: duplicateEmails.slice(0, 5),
+                });
+            }
+            throw rowError;
         }
-        const row = assertSingleStudentRowByEmail(userEmail);
 
         // 準備更新的資料
         const updateData = isJoined
             ? [joinedParam, ...departmentChoices]
-            : [joinedParam, "", "", "", "", "", ""];
+            : [joinedParam, ...Array(limitOfChoices).fill("")];
 
         if (updateSpecificRow(row, updateData)) {
             Logger.log(
