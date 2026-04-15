@@ -460,12 +460,15 @@
         document.addEventListener("DOMContentLoaded", function () {
             if (pageDataError) {
                 const container = document.querySelector('.container-fluid') || document.body;
-                container.innerHTML = `
-                    <div class="alert alert-danger mt-4" role="alert">
-                        初始化頁面資料時發生錯誤，請重新整理頁面或聯絡系統管理員。<br>
-                        錯誤訊息：${pageDataError.message}
-                    </div>
-                `;
+                const _errorAlert = document.createElement('div');
+                _errorAlert.className = 'alert alert-danger mt-4';
+                _errorAlert.setAttribute('role', 'alert');
+                _errorAlert.innerHTML = '初始化頁面資料時發生錯誤，請重新整理頁面或聯絡系統管理員。<br>錯誤訊息：';
+                const _errorMsg = document.createElement('span');
+                _errorMsg.textContent = pageDataError.message;
+                _errorAlert.appendChild(_errorMsg);
+                container.innerHTML = '';
+                container.appendChild(_errorAlert);
                 return;
             }
 
@@ -551,13 +554,15 @@
             } catch (error) {
                 console.error('資料處理錯誤:', error);
                 const container = document.querySelector('.container-fluid');
-                container.innerHTML = `
-                        <div class="alert alert-danger" role="alert">
-                            載入資料時發生錯誤，請重新整理頁面或聯絡系統管理員。
-                            <br>
-                            錯誤訊息：${error.message}
-                        </div>
-                    `;
+                const _errorAlert = document.createElement('div');
+                _errorAlert.className = 'alert alert-danger';
+                _errorAlert.setAttribute('role', 'alert');
+                _errorAlert.innerHTML = '載入資料時發生錯誤，請重新整理頁面或聯絡系統管理員。<br>錯誤訊息：';
+                const _errorMsg = document.createElement('span');
+                _errorMsg.textContent = error.message;
+                _errorAlert.appendChild(_errorMsg);
+                container.innerHTML = '';
+                container.appendChild(_errorAlert);
             }
         });
 

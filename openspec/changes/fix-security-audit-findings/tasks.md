@@ -7,9 +7,9 @@
 
 ## 2. 中優先修補：前端 XSS 防護（P1-A）
 
-- [ ] 2.1 開啟 `teacherView.html`，找到 L463 附近將 `${error.message}` 插入 `innerHTML` 的程式碼，重構為：先取得（或建立）DOM 元素，再用 `errorElement.textContent = error.message` 設定文字
-- [ ] 2.2 開啟 `teacherView.html`，找到 L554 附近的第二處 `${error.message}` 插入 `innerHTML`，同上方式改為 `textContent` 設定
-- [ ] 2.3 開啟 `index.html`，找到 L682 附近的 `${pageDataError.message}` 插入 `innerHTML`，改為 `textContent` 設定
+- [x] 2.1 開啟 `teacherView.html`，找到 L463 附近將 `${error.message}` 插入 `innerHTML` 的程式碼，重構為：先取得（或建立）DOM 元素，再用 `errorElement.textContent = error.message` 設定文字
+- [x] 2.2 開啟 `teacherView.html`，找到 L554 附近的第二處 `${error.message}` 插入 `innerHTML`，同上方式改為 `textContent` 設定
+- [x] 2.3 開啟 `index.html`，找到 L682 附近的 `${pageDataError.message}` 插入 `innerHTML`，改為 `textContent` 設定
 
 ## 3. 中優先修補：後端 HTML 清理策略（P1-B）
 
