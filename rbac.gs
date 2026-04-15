@@ -44,6 +44,7 @@ function logAuthorizationDenial(event) {
  * @returns {string}
  */
 function resolveUserRole(user) {
+    assertInternalAccess_("resolveUserRole");
     if (!user || typeof user !== "object") {
         return "";
     }
@@ -68,6 +69,7 @@ function resolveUserRole(user) {
  * @returns {{sessionEmail: string, user: Object<string, any>, role: string}}
  */
 function getAuthorizedUserContext(requiredRoles, resource) {
+    assertInternalAccess_("getAuthorizedUserContext");
     const sessionEmail = Session.getActiveUser().getEmail();
     if (!sessionEmail) {
         logAuthorizationDenial({
@@ -152,6 +154,7 @@ function getAuthorizedUserContext(requiredRoles, resource) {
  * @returns {string[]}
  */
 function getTeacherAuthorizedClasses(teacherUser) {
+    assertInternalAccess_("getTeacherAuthorizedClasses");
     const raw = String(teacherUser?.["班級"] || "");
     return raw
         .split(",")
@@ -170,6 +173,7 @@ function assertTeacherClassScope(
     authorizedClassNames,
     sessionEmail,
 ) {
+    assertInternalAccess_("assertTeacherClassScope");
     const authorizedSet = new Set(authorizedClassNames);
     const outOfScope = requestedClassNames.filter(
         (className) => !authorizedSet.has(className),

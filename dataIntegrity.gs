@@ -1,4 +1,5 @@
 function findUniqueValueRows(keyword, targetSheet, headerName = "") {
+    assertInternalAccess_("findUniqueValueRows");
     if (!keyword || !targetSheet) return [];
     try {
         let range = targetSheet;
@@ -30,6 +31,7 @@ function findUniqueValueRows(keyword, targetSheet, headerName = "") {
 }
 
 function assertSingleStudentRowByEmail(email) {
+    assertInternalAccess_("assertSingleStudentRowByEmail");
     const rows = findUniqueValueRows(email, studentChoiceSheet, "信箱");
     if (rows.length !== 1) {
         logSecurityEvent("data_integrity_row_mismatch", {
@@ -46,6 +48,7 @@ function assertSingleStudentRowByEmail(email) {
 }
 
 function detectDuplicateEmails(sheet) {
+    assertInternalAccess_("detectDuplicateEmails");
     if (!sheet) return [];
     try {
         const lastRow = sheet.getLastRow();
@@ -70,6 +73,7 @@ function detectDuplicateEmails(sheet) {
 }
 
 function getAllowedDepartmentCodeSet(user, sessionEmail = "") {
+    assertInternalAccess_("getAllowedDepartmentCodeSet");
     const userEmail = String(user?.["信箱"] || "").trim().toLowerCase();
     const normalizedSession = String(sessionEmail || "").trim().toLowerCase();
     if (normalizedSession && userEmail && userEmail !== normalizedSession) {
@@ -113,6 +117,7 @@ function getAllowedDepartmentCodeSet(user, sessionEmail = "") {
 }
 
 function validateDepartmentChoicesAllowlist(departmentChoices, allowedCodes) {
+    assertInternalAccess_("validateDepartmentChoicesAllowlist");
     const illegalCodes = [];
     departmentChoices.forEach((choice) => {
         const code = String(choice || "").trim();

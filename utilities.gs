@@ -10,6 +10,7 @@ const CSV_MIME_TYPE = "text/csv";
  * @returns {boolean} 是否為安全的關鍵字
  */
 function isValidSearchKeyword(keyword) {
+    assertInternalAccess_("isValidSearchKeyword");
   if (!keyword || typeof keyword !== "string") {
     return false;
   }
@@ -25,6 +26,7 @@ function isValidSearchKeyword(keyword) {
  * @returns {boolean} 是否有效
  */
 function validateRowUpdate(row, values) {
+    assertInternalAccess_("validateRowUpdate");
   // 檢查列號
   if (!Number.isInteger(row) || row < 1 || row > MAX_SHEET_ROWS) {
     Logger.log("(validateRowUpdate)無效的列號：%s", row);
@@ -60,6 +62,7 @@ function validateRowUpdate(row, values) {
  * @returns {number} 找到的列號，未找到回傳 0
  */
 function findValueRow(keyword, targetRange) {
+    assertInternalAccess_("findValueRow");
   try {
     Logger.log("(findValueRow)關鍵字：%s", keyword);
     // 驗證輸入參數
@@ -128,9 +131,31 @@ function findValueRow(keyword, targetRange) {
  * @param {Array} values - 二維陣列志願資料
  */
 function updateSpecificRow(row, values) {
+    assertInternalAccess_("updateSpecificRow");
   try {
+    const context = getAuthorizedUserContext(
+      ["學生"],
+      "submission.row.write"
+    );
     if (!studentChoiceSheet) {
       throw new Error("(updateSpecificRow)考生志願列表工作表不存在");
+    }
+
+    // 僅允許更新目前登入學生自己的資料列，避免被直接 RPC 呼叫越權寫入
+    const expectedRow = assertSingleStudentRowByEmail(context.sessionEmail);
+    if (row !== expectedRow) {
+      logAuthorizationDenial({
+        code: AUTH_ERROR_CODES.OUT_OF_SCOPE,
+        resource: "submission.row.write",
+        sessionEmail: context.sessionEmail,
+        requestedRow: row,
+        expectedRow,
+        reason: "row_scope_violation",
+      });
+      throw createAuthorizationError(
+        AUTH_ERROR_CODES.OUT_OF_SCOPE,
+        "禁止更新非本人資料"
+      );
     }
 
     // 確保 values 是二維陣列
@@ -198,6 +223,7 @@ function updateSpecificRow(row, values) {
  * @returns {boolean} 是否安全
  */
 function validateExportData(data) {
+    assertInternalAccess_("validateExportData");
   if (!Array.isArray(data) || data.length === 0) {
     return false;
   }
@@ -217,6 +243,7 @@ function validateExportData(data) {
  * @returns {Array} 清理後的資料
  */
 function sanitizeExportData(data) {
+    assertInternalAccess_("sanitizeExportData");
   return data.map((row) =>
     row.map((cell) => {
       if (cell === null || cell === undefined) return "";
@@ -233,6 +260,7 @@ function sanitizeExportData(data) {
  * @returns {boolean} 參數是否安全
  */
 function validateRequestParameters(configs) {
+    assertInternalAccess_("validateRequestParameters");
   if (!configs || typeof configs !== "object") {
     return false;
   }
@@ -278,139 +306,141 @@ function validateRequestParameters(configs) {
  * @returns {string|null} 下載連結或 null
  */
 function exportCsv() {
-  try {
-    const context = getAuthorizedUserContext(["老師"], "export.csv");
-    assertRateLimit("export.csv", context.sessionEmail, 5);
-    logSecurityEvent("export_csv_requested", { sessionEmail: context.sessionEmail });
+  return runWithInternalAccess_(function () {
+    try {
+      const context = getAuthorizedUserContext(["老師"], "export.csv");
+      assertRateLimit("export.csv", context.sessionEmail, 5);
+      logSecurityEvent("export_csv_requested", { sessionEmail: context.sessionEmail });
 
-    // 驗證權限和工作表
-    if (!forImportSheet) {
-      throw new Error("(exportCsv)匯入報名系統工作表不存在");
-    }
+      // 驗證權限和工作表
+      if (!forImportSheet) {
+        throw new Error("(exportCsv)匯入報名系統工作表不存在");
+      }
 
-    const configs = getConfigs();
-    if (!configs || !configs["報名學校代碼"]) {
-      throw new Error("(exportCsv)無法取得學校代碼參數");
-    }
+      const configs = getConfigs();
+      if (!configs || !configs["報名學校代碼"]) {
+        throw new Error("(exportCsv)無法取得學校代碼參數");
+      }
 
-    // 取得資料
-    const dataRange = forImportSheet.getDataRange();
-    if (dataRange.getNumRows() === 0) {
-      throw new Error("(exportCsv)沒有可匯出的資料");
-    }
+      // 取得資料
+      const dataRange = forImportSheet.getDataRange();
+      if (dataRange.getNumRows() === 0) {
+        throw new Error("(exportCsv)沒有可匯出的資料");
+      }
 
-    const [headers, ...rawData] = dataRange.getValues();
+      const [headers, ...rawData] = dataRange.getValues();
 
-    // 驗證資料
-    if (!validateExportData(rawData)) {
-      throw new Error("(exportCsv)匯出資料驗證失敗");
-    }
+      // 驗證資料
+      if (!validateExportData(rawData)) {
+        throw new Error("(exportCsv)匯出資料驗證失敗");
+      }
 
-    // 過濾和清理資料
-    const filteredData = rawData.filter((row) =>
-      row.some(
-        (cell) =>
-          cell !== null && cell !== undefined && cell.toString().trim() !== ""
-      )
-    );
+      // 過濾和清理資料
+      const filteredData = rawData.filter((row) =>
+        row.some(
+          (cell) =>
+            cell !== null && cell !== undefined && cell.toString().trim() !== ""
+        )
+      );
 
-    if (filteredData.length === 0) {
+      if (filteredData.length === 0) {
+        const ui = SpreadsheetApp.getUi();
+        ui.alert("錯誤", "沒有可匯出的資料，請確認資料內容。", ui.ButtonSet.OK);
+        return null;
+      }
+
+      // 清理資料
+      const sanitizedData = sanitizeExportData(filteredData);
+
+      // 建立CSV內容
+      const csvRows = [
+        headers.map((h) => String(h || "")).join(","),
+        ...sanitizedData.map((row) => row.join(",")),
+      ];
+      const csvContent = csvRows.join("\n");
+
+      // 產生檔名
+      const now = new Date();
+      const nowString = Utilities.formatDate(
+        now,
+        "Asia/Taipei",
+        "yyyy-MM-dd_HHmm"
+      );
+      const fileName = `${configs["報名學校代碼"]}StudQuota_${nowString}.csv`;
+
+      // 驗證檔名安全性
+      if (!/^[a-zA-Z0-9_-]+\.csv$/.test(fileName)) {
+        throw new Error("(exportCsv)檔名包含不安全字符");
+      }
+
+      // 取得試算表所在的資料夾
+      const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+      const spreadsheetId = spreadsheet.getId();
+      const spreadsheetFile = DriveApp.getFileById(spreadsheetId);
+      const parentFolder = spreadsheetFile.getParents().hasNext()
+        ? spreadsheetFile.getParents().next()
+        : DriveApp.getRootFolder();
+
+      // 建立CSV檔案
+      const blob = Utilities.newBlob(csvContent, CSV_MIME_TYPE, fileName);
+      const file = parentFolder.createFile(blob);
+
+      // 設定檔案權限
+      file.setSharing(DriveApp.Access.DOMAIN_WITH_LINK, DriveApp.Permission.VIEW);
+
+      const fileUrl = file.getDownloadUrl();
+      Logger.log(
+        "(exportCsv)CSV 檔案已建立：%s (%d 列資料)",
+        fileName,
+        sanitizedData.length
+      );
+
+      // 顯示成功訊息
       const ui = SpreadsheetApp.getUi();
-      ui.alert("錯誤", "沒有可匯出的資料，請確認資料內容。", ui.ButtonSet.OK);
+      const htmlOutput = HtmlService.createHtmlOutput(
+        `
+              <div style="padding: 20px; font-family: Arial, sans-serif; max-width: 400px;">
+                  <h3 style="color: #4CAF50; margin-top: 0;">✓ CSV 檔案建立成功！</h3>
+                  <p><strong>檔案名稱：</strong>${fileName}</p>
+                  <p><strong>資料筆數：</strong>${sanitizedData.length} 筆</p>
+                  <div style="margin: 20px 0;">
+                      <a href="${fileUrl}" target="_blank" download 
+                         style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; 
+                                color: white; text-decoration: none; border-radius: 4px;">
+                          📥 下載檔案
+                      </a>
+                  </div>
+                  <p style="color: #666; font-size: 0.9em; margin-bottom: 0;">
+                      檔案已儲存在與試算表相同的資料夾中
+                  </p>
+              </div>
+          `
+      )
+        .setWidth(450)
+        .setHeight(280);
+
+      ui.showModalDialog(htmlOutput, "CSV 匯出完成");
+      return fileUrl;
+    } catch (error) {
+      Logger.log("(exportCsv)發生錯誤：%s", error.message);
+      logSecurityEvent("export_csv_failed", {
+        message: error.message,
+      });
+
+      try {
+        const ui = SpreadsheetApp.getUi();
+        ui.alert(
+          "匯出失敗",
+          `無法建立CSV檔案：${error.message}`,
+          ui.ButtonSet.OK
+        );
+      } catch (uiError) {
+        Logger.log("(exportCsv)顯示錯誤訊息失敗：%s", uiError.message);
+      }
+
       return null;
     }
-
-    // 清理資料
-    const sanitizedData = sanitizeExportData(filteredData);
-
-    // 建立CSV內容
-    const csvRows = [
-      headers.map((h) => String(h || "")).join(","),
-      ...sanitizedData.map((row) => row.join(",")),
-    ];
-    const csvContent = csvRows.join("\n");
-
-    // 產生檔名
-    const now = new Date();
-    const nowString = Utilities.formatDate(
-      now,
-      "Asia/Taipei",
-      "yyyy-MM-dd_HHmm"
-    );
-    const fileName = `${configs["報名學校代碼"]}StudQuota_${nowString}.csv`;
-
-    // 驗證檔名安全性
-    if (!/^[a-zA-Z0-9_-]+\.csv$/.test(fileName)) {
-      throw new Error("(exportCsv)檔名包含不安全字符");
-    }
-
-    // 取得試算表所在的資料夾
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    const spreadsheetId = spreadsheet.getId();
-    const spreadsheetFile = DriveApp.getFileById(spreadsheetId);
-    const parentFolder = spreadsheetFile.getParents().hasNext()
-      ? spreadsheetFile.getParents().next()
-      : DriveApp.getRootFolder();
-
-    // 建立CSV檔案
-    const blob = Utilities.newBlob(csvContent, CSV_MIME_TYPE, fileName);
-    const file = parentFolder.createFile(blob);
-
-    // 設定檔案權限
-    file.setSharing(DriveApp.Access.DOMAIN_WITH_LINK, DriveApp.Permission.VIEW);
-
-    const fileUrl = file.getDownloadUrl();
-    Logger.log(
-      "(exportCsv)CSV 檔案已建立：%s (%d 列資料)",
-      fileName,
-      sanitizedData.length
-    );
-
-    // 顯示成功訊息
-    const ui = SpreadsheetApp.getUi();
-    const htmlOutput = HtmlService.createHtmlOutput(
-      `
-            <div style="padding: 20px; font-family: Arial, sans-serif; max-width: 400px;">
-                <h3 style="color: #4CAF50; margin-top: 0;">✓ CSV 檔案建立成功！</h3>
-                <p><strong>檔案名稱：</strong>${fileName}</p>
-                <p><strong>資料筆數：</strong>${sanitizedData.length} 筆</p>
-                <div style="margin: 20px 0;">
-                    <a href="${fileUrl}" target="_blank" download 
-                       style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; 
-                              color: white; text-decoration: none; border-radius: 4px;">
-                        📥 下載檔案
-                    </a>
-                </div>
-                <p style="color: #666; font-size: 0.9em; margin-bottom: 0;">
-                    檔案已儲存在與試算表相同的資料夾中
-                </p>
-            </div>
-        `
-    )
-      .setWidth(450)
-      .setHeight(280);
-
-    ui.showModalDialog(htmlOutput, "CSV 匯出完成");
-    return fileUrl;
-  } catch (error) {
-    Logger.log("(exportCsv)發生錯誤：%s", error.message);
-    logSecurityEvent("export_csv_failed", {
-      message: error.message,
-    });
-
-    try {
-      const ui = SpreadsheetApp.getUi();
-      ui.alert(
-        "匯出失敗",
-        `無法建立CSV檔案：${error.message}`,
-        ui.ButtonSet.OK
-      );
-    } catch (uiError) {
-      Logger.log("(exportCsv)顯示錯誤訊息失敗：%s", uiError.message);
-    }
-
-    return null;
-  }
+  });
 }
 
 /**
@@ -420,6 +450,7 @@ function exportCsv() {
  * @returns {{headers: Array, data: Array}|null} 工作表資料或 null
  */
 function getSheetDataSafely(sheet, requiredHeaders = []) {
+    assertInternalAccess_("getSheetDataSafely");
   try {
     if (!sheet) {
       Logger.log("(getSheetDataSafely)工作表不存在");
@@ -485,6 +516,7 @@ function getSheetDataSafely(sheet, requiredHeaders = []) {
  * @returns {boolean} 是否為有效的電子郵件
  */
 function isValidEmail(email) {
+    assertInternalAccess_("isValidEmail");
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return (
     typeof email === "string" &&
@@ -500,6 +532,7 @@ function isValidEmail(email) {
  * @returns {string} 安全的快取鍵值
  */
 function getSafeKeyFromEmail(email) {
+    assertInternalAccess_("getSafeKeyFromEmail");
   if (!email || typeof email !== "string") {
     return "";
   }

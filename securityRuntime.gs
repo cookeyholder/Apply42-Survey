@@ -13,6 +13,7 @@ const SECURITY_LIMITS = {
 };
 
 function toSha256Hex(input) {
+    assertInternalAccess_("toSha256Hex");
     const digest = Utilities.computeDigest(
         Utilities.DigestAlgorithm.SHA_256,
         String(input || ""),
@@ -25,6 +26,7 @@ function toSha256Hex(input) {
 }
 
 function getRequestParamFirst(parameters, key) {
+    assertInternalAccess_("getRequestParamFirst");
     if (!parameters || typeof parameters !== "object") return "";
     const value = parameters[key];
     if (Array.isArray(value)) {
@@ -37,6 +39,7 @@ function getRequestParamFirst(parameters, key) {
 }
 
 function generateSecurityToken() {
+    assertInternalAccess_("generateSecurityToken");
     return Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
 }
 
@@ -74,6 +77,7 @@ function sanitizeLogPayload(payload) {
 }
 
 function logSecurityEvent(eventType, payload = {}) {
+    assertInternalAccess_("logSecurityEvent");
     const safePayload = sanitizeLogPayload(payload);
     Logger.log(
         "(SECURITY_EVENT)%s",
@@ -86,6 +90,7 @@ function logSecurityEvent(eventType, payload = {}) {
 }
 
 function issueSubmissionSecurityContext(sessionEmail) {
+    assertInternalAccess_("issueSubmissionSecurityContext");
     const csrfToken = generateSecurityToken();
     const csrfNonce = generateSecurityToken();
     const now = Date.now();
@@ -114,6 +119,7 @@ function issueSubmissionSecurityContext(sessionEmail) {
 }
 
 function getServiceOrigin() {
+    assertInternalAccess_("getServiceOrigin");
     try {
         const url = getServiceUrl();
         if (!url) return "";
@@ -124,6 +130,7 @@ function getServiceOrigin() {
 }
 
 function assertSubmissionSecurity(request, sessionEmail) {
+    assertInternalAccess_("assertSubmissionSecurity");
     const parameters = request?.parameters || {};
     const csrfToken = getRequestParamFirst(parameters, "csrfToken");
     const csrfNonce = getRequestParamFirst(parameters, "csrfNonce");
@@ -233,6 +240,7 @@ function assertSubmissionSecurity(request, sessionEmail) {
 }
 
 function assertRateLimit(endpoint, identity, limit = SECURITY_LIMITS.submitPerMinute) {
+    assertInternalAccess_("assertRateLimit");
     const cache = CacheService.getScriptCache();
     const nowMinute = Math.floor(Date.now() / 60000);
     const key = SECURITY_CACHE_KEYS.RATE_LIMIT_PREFIX + toSha256Hex(`${endpoint}|${identity}|${nowMinute}`).slice(0, 24);
@@ -249,6 +257,7 @@ function assertRateLimit(endpoint, identity, limit = SECURITY_LIMITS.submitPerMi
 }
 
 function incrementAlertCounter(ruleName) {
+    assertInternalAccess_("incrementAlertCounter");
     const cache = CacheService.getScriptCache();
     const minuteBucket = Math.floor(Date.now() / 60000);
     const key =
@@ -270,6 +279,7 @@ function incrementAlertCounter(ruleName) {
 }
 
 function runSecurityAlertDrill() {
+    assertInternalAccess_("runSecurityAlertDrill");
     const context = getAuthorizedUserContext(["老師"], "security.alert.drill");
     assertRateLimit("security.alert.drill", context.sessionEmail, 2);
     logSecurityEvent("security_alert_drill_triggered", {

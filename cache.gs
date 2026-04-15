@@ -22,6 +22,7 @@ const CACHE_KEYS = {
  * @returns {boolean} 是否為安全的鍵值
  */
 function isValidCacheKey(key) {
+    assertInternalAccess_("isValidCacheKey");
     return (
         typeof key === "string" &&
         key.length > 0 &&
@@ -36,6 +37,7 @@ function isValidCacheKey(key) {
  * @returns {boolean} 資料大小是否合理
  */
 function isValidCacheSize(data) {
+    assertInternalAccess_("isValidCacheSize");
     try {
         const jsonStr = JSON.stringify(data);
         return jsonStr.length <= MAX_CACHE_SIZE;
@@ -50,6 +52,7 @@ function isValidCacheSize(data) {
  * @param {string} keyPrefix - 要清理的快取鍵值前綴
  */
 function cleanupCache(keyPrefix) {
+    assertInternalAccess_("cleanupCache");
     try {
         const cache = CacheService.getScriptCache();
 
@@ -75,6 +78,7 @@ function cleanupCache(keyPrefix) {
  * @param {number} [expiration] - 快取時效（秒）
  */
 function setChunkedCacheData(key, data, expiration = CACHE_EXPIRATION) {
+    assertInternalAccess_("setChunkedCacheData");
     try {
         // 驗證輸入
         if (!isValidCacheKey(key)) {
@@ -155,6 +159,7 @@ function setChunkedCacheData(key, data, expiration = CACHE_EXPIRATION) {
  * @returns {Object|null} 快取資料或 null
  */
 function getChunkedCacheData(key) {
+    assertInternalAccess_("getChunkedCacheData");
     try {
         // 驗證輸入
         if (!isValidCacheKey(key)) {
@@ -214,6 +219,7 @@ function getChunkedCacheData(key) {
  * @param {number} [expiration] - 快取時效（秒）
  */
 function setCacheData(key, data, expiration = CACHE_EXPIRATION) {
+    assertInternalAccess_("setCacheData");
     try {
         // 驗證輸入
         if (!isValidCacheKey(key)) {
@@ -260,6 +266,7 @@ function setCacheData(key, data, expiration = CACHE_EXPIRATION) {
  * @returns {Object|null} 快取資料或 null
  */
 function getCacheData(key) {
+    assertInternalAccess_("getCacheData");
     try {
         // 驗證輸入
         if (!isValidCacheKey(key)) {
@@ -305,12 +312,20 @@ function getCacheData(key) {
  * @param {string} key - 快取鍵值
  */
 function removeCacheData(key) {
+    assertInternalAccess_("removeCacheData");
     try {
+        const context = getAuthorizedUserContext(["老師"], "cache.remove");
+        assertRateLimit("cache.remove", context.sessionEmail, 10);
+
         if (!isValidCacheKey(key)) {
             Logger.log("(removeCacheData)無效的快取鍵值：%s", key);
             return;
         }
 
+        logSecurityEvent("cache_remove_requested", {
+            sessionEmail: context.sessionEmail,
+            key,
+        });
         cleanupCache(key);
         Logger.log("(removeCacheData)已移除快取：%s", key);
     } catch (error) {
@@ -320,10 +335,23 @@ function removeCacheData(key) {
 
 /**
  * @description 清除所有快取資料
+ * @param {Object|null} [context] - 已驗證的使用者上下文
  * @returns {boolean} 是否成功清除所有快取
  */
-function clearAllCache() {
+function clearAllCache(context = null) {
+    assertInternalAccess_("clearAllCache");
     try {
+        const authContext =
+            context && context.sessionEmail
+                ? context
+                : getAuthorizedUserContext(["老師"], "cache.clear");
+        if (!context) {
+            assertRateLimit("cache.clear", authContext.sessionEmail, 5);
+        }
+
+        logSecurityEvent("cache_clear_requested", {
+            sessionEmail: authContext.sessionEmail,
+        });
         const userCacheKeys = getAllUserCacheKeys();
 
         if (typeof clearStatisticsCache === "function") {
@@ -353,15 +381,16 @@ function clearAllCache() {
  * @returns {boolean} 是否成功清除所有快取
  */
 function clearAllCacheInternal() {
-    try {
-        const context = getAuthorizedUserContext(["老師"], "cache.clear");
-        assertRateLimit("cache.clear", context.sessionEmail, 5);
-        logSecurityEvent("cache_clear_requested", { sessionEmail: context.sessionEmail });
-        return clearAllCache(); // 呼叫本檔案中的 clearAllCache
-    } catch (error) {
-        Logger.log("clearAllCacheInternal 發生錯誤：%s", error.message);
-        throw error;
-    }
+    return runWithInternalAccess_(function () {
+        try {
+            const context = getAuthorizedUserContext(["老師"], "cache.clear");
+            assertRateLimit("cache.clear", context.sessionEmail, 5);
+            return clearAllCache(context); // 呼叫本檔案中的 clearAllCache
+        } catch (error) {
+            Logger.log("clearAllCacheInternal 發生錯誤：%s", error.message);
+            throw error;
+        }
+    });
 }
 
 /**
@@ -370,6 +399,7 @@ function clearAllCacheInternal() {
  * @returns {boolean} 是否成功添加到索引
  */
 function addUserToIndex(email) {
+    assertInternalAccess_("addUserToIndex");
     try {
         if (!email) {
             Logger.log("(addUserToIndex)無效的電子郵件");
@@ -422,6 +452,7 @@ function addUserToIndex(email) {
  * @returns {boolean} 是否成功移除
  */
 function removeUserFromIndex(email) {
+    assertInternalAccess_("removeUserFromIndex");
     try {
         if (!email) {
             Logger.log("(removeUserFromIndex)無效的電子郵件");
@@ -481,6 +512,7 @@ function removeUserFromIndex(email) {
  * @returns {string[]} 使用者快取鍵值陣列
  */
 function getAllUserCacheKeys() {
+    assertInternalAccess_("getAllUserCacheKeys");
     try {
         const cache = CacheService.getScriptCache();
         const indexStr = cache.get(CACHE_KEYS.USER_INDEX);

@@ -13,6 +13,7 @@ const REQUIRED_STUDENT_FIELDS = [
  * @returns {boolean} 資料是否有效
  */
 function validateTeacherData(teacher) {
+    assertInternalAccess_("validateTeacherData");
   if (!teacher || typeof teacher !== "object") {
     Logger.log("(validateTeacherData)老師資料無效或為空");
     return false;
@@ -39,6 +40,7 @@ function validateTeacherData(teacher) {
  * @returns {Array|null} 清理後的資料或 null
  */
 function sanitizeStudentRow(row, headers) {
+    assertInternalAccess_("sanitizeStudentRow");
   if (!Array.isArray(row) || !Array.isArray(headers)) {
     return null;
   }
@@ -74,6 +76,7 @@ function sanitizeStudentRow(row, headers) {
  * @returns {{headers: Array, data: Array}} 學生資料
  */
 function getTraineesDepartmentChoices(teacher) {
+    assertInternalAccess_("getTraineesDepartmentChoices");
   try {
     const context = getAuthorizedUserContext(
       ["老師"],
@@ -235,6 +238,7 @@ function getTraineesDepartmentChoices(teacher) {
  * @returns {Object} 統計資訊
  */
 function getClassStatistics(studentData, headers) {
+    assertInternalAccess_("getClassStatistics");
   try {
     if (!Array.isArray(studentData) || !Array.isArray(headers)) {
       return {

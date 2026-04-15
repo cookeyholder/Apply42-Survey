@@ -14,6 +14,7 @@ const REQUIRED_STUDENT_HEADERS = ["信箱", "是否參加集體報名"];
  * @returns {string} serviceUrl
  */
 function getServiceUrl() {
+    assertInternalAccess_("getServiceUrl");
     try {
         const effectiveUserEmail = Session.getEffectiveUser().getEmail();
         const effectiveUserDomain = effectiveUserEmail.split("@")[1];
@@ -40,6 +41,7 @@ function getServiceUrl() {
  * @returns {Object<string, any>} 參數鍵值對
  */
 function getConfigs() {
+    assertInternalAccess_("getConfigs");
     try {
         if (!configSheet) {
             throw new Error("(getConfigs)參數設定工作表不存在");
@@ -85,6 +87,7 @@ function getConfigs() {
  * @returns {boolean} 是否為有效格式
  */
 function isValidEmail(email) {
+    assertInternalAccess_("isValidEmail");
     return typeof email === "string" && EMAIL_REGEX.test(email);
 }
 
@@ -95,6 +98,7 @@ function isValidEmail(email) {
  * @returns {Object|null} 包含 headers 和 data 的物件
  */
 function getSheetDataSafely(sheet, requiredHeaders = []) {
+    assertInternalAccess_("getSheetDataSafely");
     try {
         if (!sheet) {
             return null;
@@ -147,6 +151,7 @@ function getSheetDataSafely(sheet, requiredHeaders = []) {
  * @returns {number} 標頭的欄位索引，如果找不到則回傳 -1
  */
 function getHeaderIndex(sheet, headerName) {
+    assertInternalAccess_("getHeaderIndex");
     if (!sheet || !headerName) {
         Logger.log("(getHeaderIndex)無效的參數");
         return -1;
@@ -169,6 +174,7 @@ function getHeaderIndex(sheet, headerName) {
  * @returns {Object<string, any>|null} 快取的使用者資料或 null
  */
 function getUserFromCache(email) {
+    assertInternalAccess_("getUserFromCache");
     if (!email) return null;
 
     try {
@@ -230,6 +236,7 @@ function getUserFromCache(email) {
  * @returns {Object|null} 包含使用者列號、工作表、欄位索引和使用者類型的物件，或 null
  */
 function findStudentUser(email) {
+    assertInternalAccess_("findStudentUser");
     if (!examDataSheet) {
         Logger.log(`(findStudentUser)examDataSheet 不存在`);
         return null;
@@ -260,6 +267,7 @@ function findStudentUser(email) {
  * @returns {Object|null} 包含使用者列號、工作表、欄位索引和使用者類型的物件，或 null
  */
 function findTeacherUser(email) {
+    assertInternalAccess_("findTeacherUser");
     if (!teacherSheet) {
         Logger.log(`(findTeacherUser)teacherSheet 不存在`);
         return null;
@@ -292,6 +300,7 @@ function findTeacherUser(email) {
  * @returns {Object<string, any>|null} 使用者資料物件或 null
  */
 function buildUserDataObject(targetSheet, userRow, userType) {
+    assertInternalAccess_("buildUserDataObject");
     try {
         const headers = targetSheet
             .getRange(1, 1, 1, targetSheet.getLastColumn())
@@ -329,6 +338,7 @@ function buildUserDataObject(targetSheet, userRow, userType) {
  * @returns {Object<string, any>|null} 使用者資料或 null
  */
 function getUserData() {
+    assertInternalAccess_("getUserData");
     const email = Session.getActiveUser().getEmail();
     if (!email) return null;
 
@@ -394,6 +404,7 @@ function getUserData() {
  * @returns {Object|null} 使用者資料或 null
  */
 function findUserInSheet(email, target) {
+    assertInternalAccess_("findUserInSheet");
     try {
         const userRow = findValueRow(email, target);
         if (!userRow || userRow === 0) {
@@ -437,6 +448,7 @@ function findUserInSheet(email, target) {
  * @returns {string} HTML 格式的通知列表
  */
 function getNotifications(configs) {
+    assertInternalAccess_("getNotifications");
     if (!configs || typeof configs !== "object") {
         Logger.log("(getNotifications)參數無效");
         return "";
@@ -475,6 +487,7 @@ function getNotifications(configs) {
  * @returns {{isJoined: boolean, selectedChoices: any[], departmentOptions: string[]}}
  */
 function getOptionData(user = null) {
+    assertInternalAccess_("getOptionData");
     try {
         const context = getAuthorizedUserContext(
             ["學生", "老師"],
@@ -682,6 +695,7 @@ function getOptionData(user = null) {
  * @returns {Object} 學校限制資料
  */
 function getLimitOfSchools() {
+    assertInternalAccess_("getLimitOfSchools");
     try {
         const cachedData = getCacheData(CACHE_KEYS.LIMIT_OF_SCHOOLS);
         if (cachedData) {
@@ -741,6 +755,7 @@ function getLimitOfSchools() {
  * @returns {string} 清理後的 HTML
  */
 function sanitizeHtml(html) {
+    assertInternalAccess_("sanitizeHtml");
     if (!html || typeof html !== "string") {
         return "";
     }
@@ -803,6 +818,7 @@ function sanitizeHtml(html) {
  * @returns {Object} 包含 user, configs, notifications, limitOfSchools, optionData 的物件
  */
 function getAllPageData(user) {
+    assertInternalAccess_("getAllPageData");
     try {
         const context = getAuthorizedUserContext(["學生"], "page.student.read");
         const effectiveUser = context.user;
@@ -856,6 +872,7 @@ function getAllPageData(user) {
  * @returns {Object} 包含 user, configs, serviceUrl, headers, data 的物件
  */
 function getAllTeacherPageData(user) {
+    assertInternalAccess_("getAllTeacherPageData");
     try {
         const context = getAuthorizedUserContext(
             ["老師"],

@@ -27,9 +27,39 @@
 
 ## 5. 驗證與整合確認
 
-- [ ] 5.1 以老師角色測試統計頁面（`getStatisticsSnapshot`、`getStatisticsSummaryData`、`getStatisticsGroupDetail` 均可正常使用）
-- [ ] 5.2 確認無法以學生角色帳號呼叫 `google.script.run.getStatisticsSnapshot()`（應收到失敗回調）
-- [ ] 5.3 在 `doGet` 模擬拋出例外，確認前端顯示通用錯誤訊息且瀏覽器開發工具中不可見 stack trace
-- [ ] 5.4 在瀏覽器主控台確認三處 error.message 顯示路徑（teacherView 2 處、index.html 1 處）不執行 HTML（可用 `<img src=x>` 作為測試訊息）
-- [ ] 5.5 確認 `sanitizeHtml()` 輸出通知內容格式正確（換行、粗體保留）且 `<script>alert(1)</script>` 被完整轉義
-- [ ] 5.6 確認郵件去重在 10 分鐘內不重複寄出（可用 Logger.log 驗證快取命中日誌）
+- [ ] 5.1 以老師角色驗證統計頁面可正常載入與互動
+	- 以老師帳號登入試算表，從功能表開啟「各志願選填人數統計」。
+	- 確認統計 modal 可正常開啟，且摘要、群類下拉選單與明細區塊皆有內容。
+	- 切換任一群類，確認 `getStatisticsSnapshot`、`getStatisticsSummaryData`、`getStatisticsGroupDetail` 都能正常回應且畫面無錯誤。
+	- 驗收標準：頁面無授權錯誤、無空白畫面、摘要與明細可正常顯示。
+
+- [ ] 5.2 驗證學生無法直接呼叫完整統計快照
+	- 以學生帳號登入 Web App，開啟統計相關頁面。
+	- 在瀏覽器開發工具主控台或頁面上下文中直接觸發 `google.script.run.getStatisticsSnapshot()`。
+	- 確認失敗回調會被觸發，且不會回傳完整統計快照資料。
+	- 驗收標準：學生無法取得完整快照，畫面只顯示失敗回調或權限錯誤訊息。
+
+- [ ] 5.3 驗證 `doGet` 錯誤路徑只顯示通用訊息
+	- 暫時讓 `doGet` 在 `try` 區塊中拋出例外並部署。
+	- 直接開啟 Web App URL，確認前端只顯示通用錯誤訊息。
+	- 打開瀏覽器開發工具，確認畫面與主控台都不會出現可直接曝光的 stack trace。
+	- 驗收標準：對外只顯示通用錯誤訊息，無內部堆疊資訊外洩。
+
+- [ ] 5.4 驗證三處 `error.message` 顯示路徑不會執行 HTML
+	- 分別在 `index.html` 與 `teacherView.html` 的三個錯誤顯示路徑注入測試字串，例如 `<img src=x onerror=alert(1)>`。
+	- 重新觸發錯誤流程，確認畫面只把字串當文字顯示。
+	- 確認不會出現圖片載入、`alert()` 彈出或 DOM 被插入 HTML 的情況。
+	- 驗收標準：三處輸出皆以純文字呈現，不執行任何 HTML 或事件處理器。
+
+- [ ] 5.5 驗證 `sanitizeHtml()` 保留格式並完整轉義危險內容
+	- 在後端「參數設定」的說明欄位放入一段測試內容，包含換行、粗體、`<span id=endTimeBox>`、`<a href="https://...">` 與 `<script>alert(1)</script>`。
+	- 重新載入前端通知區塊，確認換行與粗體仍保留，連結可正常渲染。
+	- 確認 `<script>` 內容會被完整轉義，不會執行，也不會破壞通知結構。
+	- 驗收標準：格式保留、危險 HTML 轉義、`<a>` 與 `<span>` 的安全屬性可正常顯示。
+
+- [ ] 5.6 驗證郵件去重在 10 分鐘內不會重複寄送
+	- 以相同收件人與相同志願資料連續觸發兩次寄信流程。
+	- 第一次確認可正常寄出，第二次確認不會再次寄送。
+	- 檢查 Logger.log 是否出現郵件去重命中的紀錄，並確認信箱只收到一封。
+	- 若要驗證 TTL，到期後再觸發一次，確認 10 分鐘後會重新允許寄送。
+	- 驗收標準：TTL 內不重複寄信，TTL 到期後可正常再次寄出。

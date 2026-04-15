@@ -8,6 +8,7 @@
  * @returns {boolean} - 寄信成功與否
  */
 function sendResultNotificationEmail(user, toEmail, wishes, submissionTime, configs) {
+    assertInternalAccess_("sendResultNotificationEmail");
   try {
     // 去重保護：相同收件人與志願清單在 10 分鐘內不重複寄信
     const normalizedEmail = String(toEmail || '').trim().toLowerCase();
