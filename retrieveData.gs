@@ -780,10 +780,15 @@ function sanitizeHtml(html) {
                 (_, id) => `<span id="${id}">`)
             .replace(/&lt;span&gt;/gi, "<span>")
             .replace(/&lt;\/span&gt;/gi, "</span>")
-            // <a> 連結：僅允許 http/https href，強制加 target="_blank" rel="noopener noreferrer"
-            // 支援 target 在 href 前或後的寫法
-            .replace(/&lt;a\s+(?:target=&quot;_blank&quot;\s+)?href=&quot;(https?:\/\/[^"&<>\s]*(?:&amp;[^"<>\s]*)*)&quot;(?:\s+target=&quot;_blank&quot;)?\s*&gt;/gi,
-                (_, url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">`)
+            // <a> 連結：匹配整個 &lt;a...&gt; 區塊，從 attrs 安全提取 href，僅允許 http/https
+            // 使用 callback 方式，避免複雜 regex 在 GAS V8 產生邊界問題
+            .replace(/&lt;a\b([\s\S]*?)&gt;/gi, function(match, attrs) {
+                var decoded = attrs.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+                var hrefMatch = decoded.match(/\bhref\s*=\s*"(https?:\/\/[^"]+)"/i) ||
+                                decoded.match(/\bhref\s*=\s*'(https?:\/\/[^']+)'/i);
+                if (!hrefMatch) { return ''; } // javascript: 或無 href，完全移除 tag
+                return '<a href="' + hrefMatch[1] + '" target="_blank" rel="noopener noreferrer">';
+            })
             .replace(/&lt;\/a&gt;/gi, "</a>")
             .replace(/&lt;\/li&gt;/gi, "</li>")
             .trim();
