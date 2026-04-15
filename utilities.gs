@@ -496,5 +496,16 @@ function getSafeKeyFromEmail(email) {
   if (!email || typeof email !== "string") {
     return "";
   }
-  return email.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return "";
+  const digest = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    normalized,
+    Utilities.Charset.UTF_8
+  );
+  const hex = digest
+    .map((byte) => (byte < 0 ? byte + 256 : byte))
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
+  return `u_${hex.slice(0, 24)}`;
 }

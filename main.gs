@@ -276,6 +276,7 @@ function doPost(request) {
 
         let departmentChoices = [];
         if (isJoined) {
+            const allowedCodes = getAllowedDepartmentCodeSet(user);
             // 取得並驗證志願選擇
             for (let i = 1; i <= limitOfChoices; i++) {
                 const choice = String(
@@ -290,6 +291,7 @@ function doPost(request) {
                 }
                 departmentChoices.push(choice);
             }
+            validateDepartmentChoicesAllowlist(departmentChoices, allowedCodes);
 
             // 排序志願（空值排到後面）
             departmentChoices.sort((a, b) => {
@@ -302,14 +304,13 @@ function doPost(request) {
 
         // 更新資料
         const userEmail = context.sessionEmail;
-        const row = findValueRow(userEmail, studentChoiceSheet);
-
-        if (!row || row === 0) {
-            Logger.log("(doPost)找不到使用者資料列：%s", userEmail);
-            return ContentService.createTextOutput(
-                "找不到使用者資料",
-            ).setMimeType(ContentService.MimeType.TEXT);
+        const duplicateEmails = detectDuplicateEmails(studentChoiceSheet);
+        if (duplicateEmails.length > 0) {
+            logSecurityEvent("duplicate_email_detected", {
+                duplicates: duplicateEmails.slice(0, 5),
+            });
         }
+        const row = assertSingleStudentRowByEmail(userEmail);
 
         // 準備更新的資料
         const updateData = isJoined
