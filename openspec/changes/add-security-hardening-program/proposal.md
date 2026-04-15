@@ -24,6 +24,62 @@
 - 每個子提案開發採用高頻提交策略：以小批次、可驗證、可回溯的 commit 持續提交。
 - 每個子提案開發採用 TDD：先寫失敗測試，再實作最小可行修補，最後重構並保持測試綠燈。
 
+## Scope Ownership
+
+| 提案 | 優先級 | 範圍邊界 | 主要風險 |
+| --- | --- | --- | --- |
+| `add-server-side-rbac-guards` | P0 | Server 端角色驗證、資源存取授權、防止客戶端繞過 | 權限提升、跨帳號資料寫入 |
+| `add-csrf-replay-protection` | P0 | CSRF token、一次性 nonce、時效驗證、提交簽章 | 跨站請求偽造、重放攻擊 |
+| `add-data-integrity-cache-safety` | P1 | 資料綁定驗證、快取隔離鍵、版本檢查 | A/B 使用者資料污染、舊資料覆寫 |
+| `add-security-observability-throttling` | P1 | 稽核日誌、異常偵測、速率限制與告警 | 攻擊不可見、暴力/濫用請求 |
+
+## Dependency And Milestones
+
+| 里程碑 | 前置條件 | 交付內容 | 驗收條件 |
+| --- | --- | --- | --- |
+| M1 RBAC 上線 | 父提案核准、基線測試可執行 | `add-server-side-rbac-guards` 合併 main | 未授權角色全部阻擋、授權流程回歸綠燈 |
+| M2 CSRF/重放防護 | M1 已合併 main | `add-csrf-replay-protection` 合併 main | 缺 token/過期 token/重放請求均拒絕 |
+| M3 一致性/快取安全 | M2 已合併 main | `add-data-integrity-cache-safety` 合併 main | 無跨使用者寫入、快取鍵隔離驗證通過 |
+| M4 觀測與節流 | M3 已合併 main | `add-security-observability-throttling` 合併 main | 攻擊事件可追蹤、節流規則生效 |
+| M5 全域安全回歸 | M1-M4 已完成 | 父提案結案報告 | 安全回歸清單全綠、殘餘風險已註記 |
+
+## Sub-Proposal Tracking Board
+
+| 子提案 | 開發分支 | 狀態 | 阻塞 | 風險 |
+| --- | --- | --- | --- | --- |
+| `add-server-side-rbac-guards` | `feature/security-rbac-guards` | Not Started | 無 | 高 |
+| `add-csrf-replay-protection` | `feature/security-csrf-replay` | Not Started | 依賴 M1 | 高 |
+| `add-data-integrity-cache-safety` | `feature/security-data-integrity-cache` | Not Started | 依賴 M2 | 中 |
+| `add-security-observability-throttling` | `feature/security-observability-throttling` | Not Started | 依賴 M3 | 中 |
+
+更新規則：
+- 任一子提案開發啟動、PR 建立、審查阻塞、併入 main 時，必須同步更新此表格。
+- 前一子提案未完成合併，不得將下一子提案狀態改為 In Progress。
+
+## Shared Acceptance And Regression Gates
+
+- 共同驗收門檻：
+  - 安全控制必須在 server 端強制，禁止只依賴前端檢查。
+  - 每個子提案需附攻擊情境測試（至少 1 個正向、2 個負向）。
+  - 每個子提案需提供風險收斂證據（被阻擋請求或日誌證據）。
+- 全域回歸原則：
+  - 功能回歸：既有提交流程與報表流程不退化。
+  - 安全回歸：授權、CSRF、重放、資料隔離、節流均有自動化測試。
+  - 併版回歸：每個子提案合併後必跑整包測試，最終再跑一次全域安全回歸。
+
+## High-Frequency Commit Strategy
+
+- 每次 commit 只處理單一可驗證意圖（例如：新增一組失敗測試、補一個 server 驗證點）。
+- 每次 commit 前後都要可執行最小測試集，確保可回滾。
+- 禁止累積超大批次變更；PR 內 commit 應呈現可追蹤演進脈絡。
+
+## TDD Enforcement
+
+- Red: 先提交會失敗的安全測試，明確重現威脅情境。
+- Green: 以最小修補讓測試轉綠，不同時引入非必要重構。
+- Refactor: 維持綠燈前提下整理命名、重複邏輯與結構。
+- 驗收時必須檢附測試演進證據（失敗測試 commit → 修補 commit → 重構 commit）。
+
 ## Capabilities
 
 ### New Capabilities
