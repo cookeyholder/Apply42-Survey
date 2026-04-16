@@ -26,17 +26,19 @@ const limitOfChoices = 6; // 最多可填的志願數量
  * @description 建立自訂功能表「志願調查系統」
  */
 function onOpen() {
-    try {
-        SpreadsheetApp.getUi()
-            .createMenu("志願調查系統")
-            .addItem("匯出報名用CSV", "exportCsv")
-            .addItem("各志願選填人數統計", "showStatisticsPage")
-            .addItem("清除快取", "clearAllCacheInternal")
-            .addToUi();
-        Logger.log("(onOpen)功能表建立成功");
-    } catch (error) {
-        Logger.log("(onOpen)建立功能表時發生錯誤：%s", error.message);
-    }
+    return runWithInternalAccess_(function () {
+        try {
+            SpreadsheetApp.getUi()
+                .createMenu("志願調查系統")
+                .addItem("匯出報名用CSV", "exportCsv")
+                .addItem("各志願選填人數統計", "showStatisticsPage")
+                .addItem("清除快取", "clearAllCacheInternal")
+                .addToUi();
+            Logger.log("(onOpen)功能表建立成功");
+        } catch (error) {
+            Logger.log("(onOpen)建立功能表時發生錯誤：%s", error.message);
+        }
+    });
 }
 
 /**
@@ -45,93 +47,71 @@ function onOpen() {
  * @returns {HtmlOutput} HTML 輸出
  */
 function doGet(request) {
-    try {
-        // 驗證請求參數
-        if (!validateRequestParameters(request.parameters)) {
-            Logger.log("請求參數驗證失敗");
+    return runWithInternalAccess_(function () {
+        try {
+            // 驗證請求參數
+            if (!validateRequestParameters(request.parameters)) {
+                Logger.log("請求參數驗證失敗");
+                return HtmlService.createHtmlOutput(
+                    '<div style="padding: 20px; color: red;">無效的請求參數</div>',
+                );
+            }
+
+            Logger.log("(doGet)收到頁面請求");
+
+            const user = getUserData();
+            if (user && user["信箱"]) {
+                Logger.log("(doGet)使用者：%s", maskEmail(user["信箱"]));
+            }
+
+            const configs = getConfigs();
+            Logger.log("(doGet)系統設定載入完成");
+
+            // 如果使用者未登入或登入的不在允許名單之中
+            if (!user) {
+                return HtmlService.createHtmlOutput(`
+                    <div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;">
+                        <h2 style="color: #d32f2f;">存取受限</h2>
+                        <p>請先登入學校的信箱帳號，並使用 Chrome 瀏覽器。</p>
+                        <p style="color: #666; font-size: 0.9em;">如有問題請聯絡系統管理員</p>
+                    </div>
+                `);
+            }
+
+            // 驗證系統參數
+            if (!configs || !configs["系統名稱"]) {
+                Logger.log("(doGet)系統參數不完整");
+                return HtmlService.createHtmlOutput(
+                    '<div style="padding: 20px; color: red;">系統設定錯誤，請聯絡管理員</div>',
+                );
+            }
+
+            // 如果是學生就顯示學生頁面
+            if (user["userType"] === "學生") {
+                return renderStudentPage(user, configs);
+            }
+
+            // 如果是老師就顯示老師頁面
+            if (user["userType"] === "老師") {
+                return renderTeacherPage(user, configs);
+            }
+
+            Logger.log("(doGet)未知的使用者類型：%s", user["userType"]);
             return HtmlService.createHtmlOutput(
-                '<div style="padding: 20px; color: red;">無效的請求參數</div>',
+                '<div style="padding: 20px; color: red;">使用者角色未定義，請聯絡管理員</div>',
             );
-        }
+        } catch (err) {
+            Logger.log("(doGet)發生錯誤：%s\n%s", err.message, err.stack);
 
-        Logger.log("(doGet)收到頁面請求");
-
-        const user = getUserData();
-        if (user && user["信箱"]) {
-            Logger.log("(doGet)使用者：%s", maskEmail(user["信箱"]));
-        }
-
-        const configs = getConfigs();
-        Logger.log("(doGet)系統設定載入完成");
-
-        // 如果使用者未登入或登入的不在允許名單之中
-        if (!user) {
             return HtmlService.createHtmlOutput(`
                 <div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;">
-                    <h2 style="color: #d32f2f;">存取受限</h2>
-                    <p>請先登入學校的信箱帳號，並使用 Chrome 瀏覽器。</p>
-                    <p style="color: #666; font-size: 0.9em;">如有問題請聯絡系統管理員</p>
+                    <h2 style="color: #d32f2f;">系統錯誤</h2>
+                    <p>很抱歉，系統發生錯誤，請稍後再試。</p>
+                    <p style="color: #666; font-size: 0.9em;">錯誤時間：${new Date().toLocaleString("zh-TW")}</p>
                 </div>
             `);
         }
-
-        // 驗證系統參數
-        if (!configs || !configs["系統名稱"]) {
-            Logger.log("(doGet)系統參數不完整");
-            return HtmlService.createHtmlOutput(
-                '<div style="padding: 20px; color: red;">系統設定錯誤，請聯絡管理員</div>',
-            );
-        }
-
-        // 如果是學生就顯示學生頁面
-        if (user["userType"] === "學生") {
-            return renderStudentPage(user, configs);
-        }
-
-        // 如果是老師就顯示老師頁面
-        if (user["userType"] === "老師") {
-            return renderTeacherPage(user, configs);
-        }
-
-        Logger.log("(doGet)未知的使用者類型：%s", user["userType"]);
-        return HtmlService.createHtmlOutput(
-            '<div style="padding: 20px; color: red;">使用者角色未定義，請聯絡管理員</div>',
-        );
-    } catch (err) {
-        Logger.log("(doGet)發生錯誤：%s\n%s", err.message, err.stack);
-
-        // 轉義 HTML 特殊字符以防止 XSS
-        const escapeHtml = (text) => {
-            return text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#x27;");
-        };
-
-        return HtmlService.createHtmlOutput(`
-            <div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;">
-                <h2 style="color: #d32f2f;">系統錯誤</h2>
-                <p>很抱歉，系統發生錯誤，請稍後再試。</p>
-                <p style="color: #666; font-size: 0.9em;">錯誤時間：${new Date().toLocaleString(
-                    "zh-TW",
-                )}</p>
-                <div style="margin-top: 20px; padding: 10px; background-color: #f5f5f5; border-left: 4px solid #d32f2f; text-align: left;">
-                    <h3 style="color: #d32f2f; margin-top: 0;">錯誤詳情：</h3>
-                    <p><strong>錯誤訊息：</strong> ${escapeHtml(
-                        err.message || "未知錯誤",
-                    )}</p>
-                    <details style="margin-top: 10px;">
-                        <summary style="cursor: pointer; color: #666;">顯示詳細堆疊資訊</summary>
-                        <pre style="background-color: #fff; padding: 10px; border: 1px solid #ddd; margin-top: 10px; font-size: 12px; overflow: auto;">${escapeHtml(
-                            err.stack || "無堆疊資訊",
-                        )}</pre>
-                    </details>
-                </div>
-            </div>
-        `);
-    }
+    });
 }
 
 /**
@@ -141,6 +121,7 @@ function doGet(request) {
  * @returns {HtmlOutput} HTML 輸出
  */
 function renderStudentPage(user, configs, wishReceived = false) {
+    assertInternalAccess_("renderStudentPage");
     try {
         const template = HtmlService.createTemplateFromFile("index");
 
@@ -171,6 +152,7 @@ function renderStudentPage(user, configs, wishReceived = false) {
 }
 
 function getWishesReceivedMessage() {
+    assertInternalAccess_("getWishesReceivedMessage");
     return `<li>
               已經收到您所選擇的志願了，以下是您目前所選的志願，若想要更改志願，請於截止時間前重新填表。
           </li>`;
@@ -183,6 +165,7 @@ function getWishesReceivedMessage() {
  * @returns {HtmlOutput} HTML 輸出
  */
 function renderTeacherPage(user, configs, templateName = "teacherView") {
+    assertInternalAccess_("renderTeacherPage");
     try {
         const template = HtmlService.createTemplateFromFile(templateName);
 
@@ -213,177 +196,185 @@ function renderTeacherPage(user, configs, templateName = "teacherView") {
  * @returns {HtmlOutput|ContentService.TextOutput} 回應內容
  */
 function doPost(request) {
-    try {
-        // 驗證請求參數
-        if (!validateRequestParameters(request.parameters)) {
-            Logger.log("(doPost)POST 請求參數驗證失敗");
-            return ContentService.createTextOutput(
-                "無效的請求參數",
-            ).setMimeType(ContentService.MimeType.TEXT);
-        }
-
-        Logger.log("(doPost)收到提交請求");
-
-        const context = getAuthorizedUserContext(["學生"], "submission.write");
-        const user = context.user;
-        if (!user["統一入學測驗報名序號"]) {
-            Logger.log("(doPost)無效的使用者或非學生帳號嘗試提交");
-            return ContentService.createTextOutput("存取被拒絕").setMimeType(
-                ContentService.MimeType.TEXT,
-            );
-        }
-
-        assertRateLimit("submission.write", context.sessionEmail);
-        assertSubmissionSecurity(request, context.sessionEmail);
-
-        const configs = getConfigs();
-        if (!configs || !configs["系統關閉時間"]) {
-            Logger.log("(doPost)系統參數不完整");
-            return ContentService.createTextOutput("系統設定錯誤").setMimeType(
-                ContentService.MimeType.TEXT,
-            );
-        }
-
-        // 檢查截止時間
-        const endTime = new Date(configs["系統關閉時間"]);
-        const now = new Date();
-        const tolerance = 60000; // 1 分鐘容忍時間
-
-        if (isNaN(endTime.getTime())) {
-            Logger.log(
-                "(doPost)系統關閉時間格式錯誤：%s",
-                configs["系統關閉時間"],
-            );
-            return ContentService.createTextOutput(
-                "系統時間設定錯誤",
-            ).setMimeType(ContentService.MimeType.TEXT);
-        }
-
-        if (now - endTime > tolerance) {
-            Logger.log(
-                "(doPost)提交時間已過截止時間，現在：%s，截止：%s",
-                now,
-                endTime,
-            );
-            return ContentService.createTextOutput(
-                "志願調查已結束",
-            ).setMimeType(ContentService.MimeType.TEXT);
-        }
-
-        // 驗證和清理輸入資料
-        const joinedParam = String(
-            request.parameters.isJoinedInput?.[0] || "否",
-        ).trim();
-        const isJoined = joinedParam === "是";
-
-        let departmentChoices = [];
-        if (isJoined) {
-            const allowedCodes = getAllowedDepartmentCodeSet(
-                user,
-                context.sessionEmail,
-            );
-            // 取得並驗證志願選擇
-            for (let i = 1; i <= limitOfChoices; i++) {
-                const choice = String(
-                    request.parameters[`departmentChoices_${i}`]?.[0] || "",
-                ).trim();
-                // 驗證志願格式（應為6位數字）
-                if (choice && !/^\d{6}$/.test(choice)) {
-                    Logger.log("(doPost)無效的志願格式：%s", choice);
-                    return ContentService.createTextOutput(
-                        "無效的志願格式",
-                    ).setMimeType(ContentService.MimeType.TEXT);
-                }
-                departmentChoices.push(choice);
-            }
-            validateDepartmentChoicesAllowlist(departmentChoices, allowedCodes);
-
-            // 排序志願（空值排到後面）
-            departmentChoices.sort((a, b) => {
-                if (a === "" && b === "") return 0;
-                if (a === "") return 1;
-                if (b === "") return -1;
-                return Number(a) - Number(b);
-            });
-        }
-
-        // 更新資料
-        const userEmail = context.sessionEmail;
-        let row = 0;
+    return runWithInternalAccess_(function () {
         try {
-            row = assertSingleStudentRowByEmail(userEmail);
-        } catch (rowError) {
-            const duplicateEmails = detectDuplicateEmails(studentChoiceSheet);
-            if (duplicateEmails.length > 0) {
-                logSecurityEvent("duplicate_email_detected", {
-                    duplicates: duplicateEmails.slice(0, 5),
+            // 驗證請求參數
+            if (!validateRequestParameters(request.parameters)) {
+                Logger.log("(doPost)POST 請求參數驗證失敗");
+                return ContentService.createTextOutput(
+                    "無效的請求參數",
+                ).setMimeType(ContentService.MimeType.TEXT);
+            }
+
+            Logger.log("(doPost)收到提交請求");
+
+            const context = getAuthorizedUserContext(["學生"], "submission.write");
+            const user = context.user;
+            if (!user["統一入學測驗報名序號"]) {
+                Logger.log("(doPost)無效的使用者或非學生帳號嘗試提交");
+                return ContentService.createTextOutput("存取被拒絕").setMimeType(
+                    ContentService.MimeType.TEXT,
+                );
+            }
+
+            assertRateLimit("submission.write", context.sessionEmail);
+            assertSubmissionSecurity(request, context.sessionEmail);
+
+            const configs = getConfigs();
+            if (!configs || !configs["系統關閉時間"]) {
+                Logger.log("(doPost)系統參數不完整");
+                return ContentService.createTextOutput("系統設定錯誤").setMimeType(
+                    ContentService.MimeType.TEXT,
+                );
+            }
+
+            // 檢查截止時間
+            const endTime = new Date(configs["系統關閉時間"]);
+            const now = new Date();
+            const tolerance = 60000; // 1 分鐘容忍時間
+
+            if (isNaN(endTime.getTime())) {
+                Logger.log(
+                    "(doPost)系統關閉時間格式錯誤：%s",
+                    configs["系統關閉時間"],
+                );
+                return ContentService.createTextOutput(
+                    "系統時間設定錯誤",
+                ).setMimeType(ContentService.MimeType.TEXT);
+            }
+
+            if (now - endTime > tolerance) {
+                Logger.log(
+                    "(doPost)提交時間已過截止時間，現在：%s，截止：%s",
+                    now,
+                    endTime,
+                );
+                return ContentService.createTextOutput(
+                    "志願調查已結束",
+                ).setMimeType(ContentService.MimeType.TEXT);
+            }
+
+            // 驗證和清理輸入資料
+            const joinedParam = String(
+                request.parameters.isJoinedInput?.[0] || "否",
+            ).trim();
+            const isJoined = joinedParam === "是";
+
+            let departmentChoices = [];
+            if (isJoined) {
+                const allowedCodes = getAllowedDepartmentCodeSet(
+                    user,
+                    context.sessionEmail,
+                );
+                // 取得並驗證志願選擇
+                for (let i = 1; i <= limitOfChoices; i++) {
+                    const choice = String(
+                        request.parameters[`departmentChoices_${i}`]?.[0] || "",
+                    ).trim();
+                    // 驗證志願格式（應為6位數字）
+                    if (choice && !/^\d{6}$/.test(choice)) {
+                        Logger.log("(doPost)無效的志願格式：%s", choice);
+                        return ContentService.createTextOutput(
+                            "無效的志願格式",
+                        ).setMimeType(ContentService.MimeType.TEXT);
+                    }
+                    departmentChoices.push(choice);
+                }
+                validateDepartmentChoicesAllowlist(
+                    departmentChoices,
+                    allowedCodes,
+                );
+
+                // 排序志願（空值排到後面）
+                departmentChoices.sort((a, b) => {
+                    if (a === "" && b === "") return 0;
+                    if (a === "") return 1;
+                    if (b === "") return -1;
+                    return Number(a) - Number(b);
                 });
             }
-            throw rowError;
-        }
 
-        // 準備更新的資料
-        const updateData = isJoined
-            ? [joinedParam, ...departmentChoices]
-            : [joinedParam, ...Array(limitOfChoices).fill("")];
+            // 更新資料
+            const userEmail = context.sessionEmail;
+            let row = 0;
+            try {
+                row = assertSingleStudentRowByEmail(userEmail);
+            } catch (rowError) {
+                const duplicateEmails = detectDuplicateEmails(studentChoiceSheet);
+                if (duplicateEmails.length > 0) {
+                    logSecurityEvent("duplicate_email_detected", {
+                        duplicates: duplicateEmails.slice(0, 5),
+                    });
+                }
+                throw rowError;
+            }
 
-        if (updateSpecificRow(row, updateData)) {
-            Logger.log(
-                "(doPost)成功更新使用者 %s 的志願資料",
-                maskEmail(userEmail),
-            );
-            logSecurityEvent("submission_success", {
-                userEmail,
-                row,
-                isJoined,
-            });
-        }
+            // 準備更新的資料
+            const updateData = isJoined
+                ? [joinedParam, ...departmentChoices]
+                : [joinedParam, ...Array(limitOfChoices).fill("")];
 
-        // 建立日誌記錄
-        const record = {
-            isJoined: isJoined,
-            departmentChoices_1: departmentChoices[0],
-            departmentChoices_2: departmentChoices[1],
-            departmentChoices_3: departmentChoices[2],
-            departmentChoices_4: departmentChoices[3],
-            departmentChoices_5: departmentChoices[4],
-            departmentChoices_6: departmentChoices[5],
-        };
-        logAdder(user, record);
+            if (updateSpecificRow(row, updateData)) {
+                Logger.log(
+                    "(doPost)成功更新使用者 %s 的志願資料",
+                    maskEmail(userEmail),
+                );
+                logSecurityEvent("submission_success", {
+                    userEmail,
+                    row,
+                    isJoined,
+                });
+            }
 
-        // 如果有設定要寄送選填結果通知信，才會寄送
-        if (configs["是否寄送選填內容通知信"] === "是") {
-            sendResultNotificationEmail(
-                user,
-                userEmail,
-                departmentChoices,
-                new Date().toLocaleString("zh-TW", {
-                    timeZone: "Asia/Taipei",
-                }),
-                configs,
-            );
-            Logger.log("(doPost)寄送選填內容通知信給使用者 %s 成功", userEmail);
-        } else {
-            Logger.log("(doPost)未設定寄送選填內容通知信，跳過寄送步驟");
-        }
+            // 建立日誌記錄
+            const record = {
+                isJoined: isJoined,
+                departmentChoices_1: departmentChoices[0],
+                departmentChoices_2: departmentChoices[1],
+                departmentChoices_3: departmentChoices[2],
+                departmentChoices_4: departmentChoices[3],
+                departmentChoices_5: departmentChoices[4],
+                departmentChoices_6: departmentChoices[5],
+            };
+            logAdder(user, record);
 
-        // 渲染成功頁面
-        return renderStudentPage(user, configs, true);
-    } catch (err) {
-        Logger.log("(doPost)發生錯誤：%s\n%s", err.message, err.stack);
-        if (err && err.name === "AuthorizationError") {
-            logSecurityEvent("submission_denied", {
-                code: err.code || AUTH_ERROR_CODES.FORBIDDEN,
-                message: err.message,
-            });
+            // 如果有設定要寄送選填結果通知信，才會寄送
+            if (configs["是否寄送選填內容通知信"] === "是") {
+                sendResultNotificationEmail(
+                    user,
+                    userEmail,
+                    departmentChoices,
+                    new Date().toLocaleString("zh-TW", {
+                        timeZone: "Asia/Taipei",
+                    }),
+                    configs,
+                );
+                Logger.log(
+                    "(doPost)寄送選填內容通知信給使用者 %s 成功",
+                    userEmail,
+                );
+            } else {
+                Logger.log("(doPost)未設定寄送選填內容通知信，跳過寄送步驟");
+            }
+
+            // 渲染成功頁面
+            return renderStudentPage(user, configs, true);
+        } catch (err) {
+            Logger.log("(doPost)發生錯誤：%s\n%s", err.message, err.stack);
+            if (err && err.name === "AuthorizationError") {
+                logSecurityEvent("submission_denied", {
+                    code: err.code || AUTH_ERROR_CODES.FORBIDDEN,
+                    message: err.message,
+                });
+                return ContentService.createTextOutput(
+                    err.message || "提交驗證失敗",
+                ).setMimeType(ContentService.MimeType.TEXT);
+            }
             return ContentService.createTextOutput(
-                err.message || "提交驗證失敗",
+                "系統錯誤，請稍後再試",
             ).setMimeType(ContentService.MimeType.TEXT);
         }
-        return ContentService.createTextOutput(
-            "系統錯誤，請稍後再試",
-        ).setMimeType(ContentService.MimeType.TEXT);
-    }
+    });
 }
 
 /**
@@ -392,12 +383,14 @@ function doPost(request) {
  * @returns {HtmlOutput} 設定完成的 HTML 輸出物件
  */
 function setXFrameOptionsSafely(htmlOutput) {
+    assertInternalAccess_("setXFrameOptionsSafely");
     // 預設不允許被外部 frame 嵌入，直接回傳 htmlOutput
     // 使用預設的 X-Frame-Options 行為以防止 clickjacking 攻擊
     return htmlOutput;
 }
 
 function logAdder(user, record) {
+    assertInternalAccess_("logAdder");
     const departmentOptions = getOptionData(user)["departmentOptions"];
     const departmentName = (option) => {
         if (!option || option === "") return "";

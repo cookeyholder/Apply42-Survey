@@ -44,22 +44,19 @@ function logAuthorizationDenial(event) {
  * @returns {string}
  */
 function resolveUserRole(user) {
+    assertInternalAccess_("resolveUserRole");
     if (!user || typeof user !== "object") {
         return "";
     }
 
     const directRole = String(user.userType || "").trim();
-    if (directRole === "學生" || directRole === "老師" || directRole === "管理") {
+    if (directRole === "學生" || directRole === "老師") {
         return directRole;
     }
 
     const roleField = String(user["角色"] || "").trim();
-    if (roleField === "學生" || roleField === "老師" || roleField === "管理") {
+    if (roleField === "學生" || roleField === "老師") {
         return roleField;
-    }
-
-    if (String(user["是否管理員"] || "").trim() === "是") {
-        return "管理";
     }
 
     return "";
@@ -72,6 +69,7 @@ function resolveUserRole(user) {
  * @returns {{sessionEmail: string, user: Object<string, any>, role: string}}
  */
 function getAuthorizedUserContext(requiredRoles, resource) {
+    assertInternalAccess_("getAuthorizedUserContext");
     const sessionEmail = Session.getActiveUser().getEmail();
     if (!sessionEmail) {
         logAuthorizationDenial({
@@ -156,6 +154,7 @@ function getAuthorizedUserContext(requiredRoles, resource) {
  * @returns {string[]}
  */
 function getTeacherAuthorizedClasses(teacherUser) {
+    assertInternalAccess_("getTeacherAuthorizedClasses");
     const raw = String(teacherUser?.["班級"] || "");
     return raw
         .split(",")
@@ -174,6 +173,7 @@ function assertTeacherClassScope(
     authorizedClassNames,
     sessionEmail,
 ) {
+    assertInternalAccess_("assertTeacherClassScope");
     const authorizedSet = new Set(authorizedClassNames);
     const outOfScope = requestedClassNames.filter(
         (className) => !authorizedSet.has(className),

@@ -2,13 +2,16 @@
  * @description 顯示統計頁面
  */
 function showStatisticsPage() {
-    let htmlOutput = HtmlService.createHtmlOutputFromFile(
-        "statisticsTemplate.html",
-    )
-        .setWidth(900)
-        .setHeight(700);
-    htmlOutput = setXFrameOptionsSafely(htmlOutput); // Use the existing safe wrapper
-    SpreadsheetApp.getUi().showModalDialog(htmlOutput, "各志願選填統計");
+    return runWithInternalAccess_(function () {
+        const context = getAuthorizedUserContext(["老師"], "statistics.page.open");
+        assertRateLimit("statistics.page.open", context.sessionEmail, 20);
+        let htmlOutput = HtmlService.createTemplateFromFile("statisticsTemplate")
+            .evaluate()
+            .setWidth(900)
+            .setHeight(700);
+        htmlOutput = setXFrameOptionsSafely(htmlOutput); // Use the existing safe wrapper
+        SpreadsheetApp.getUi().showModalDialog(htmlOutput, "各志願選填統計");
+    });
 }
 
 /**
@@ -19,6 +22,7 @@ function showStatisticsPage() {
  * @returns {number} 欄位步長（1 或 2）
  */
 function resolveChoiceStep(headers, startIndex, secondChoiceHeaders) {
+    assertInternalAccess_("resolveChoiceStep");
     if (startIndex < 0) return 1;
 
     const candidateOffsets = [1, 2];
@@ -52,6 +56,7 @@ const STATS_CACHE_KEYS = {
 };
 
 function toHexString(bytes) {
+    assertInternalAccess_("toHexString");
     return bytes
         .map((byte) => {
             const normalized = byte < 0 ? byte + 256 : byte;
@@ -66,6 +71,7 @@ function getStatisticsGroupDetailCacheKey(
     pageSize,
     snapshotVersion = "",
 ) {
+    assertInternalAccess_("getStatisticsGroupDetailCacheKey");
     const source = `${snapshotVersion}|${groupName}|${page}|${pageSize}`;
     const digestBytes = Utilities.computeDigest(
         Utilities.DigestAlgorithm.SHA_256,
@@ -79,6 +85,7 @@ function getStatisticsGroupDetailCacheKey(
 }
 
 function buildChoiceLabel(choiceCode, choiceName) {
+    assertInternalAccess_("buildChoiceLabel");
     const safeCode = String(choiceCode || "").trim();
     let safeName = String(choiceName || "").trim();
 
@@ -108,6 +115,7 @@ function buildChoiceLabel(choiceCode, choiceName) {
 }
 
 function getStatisticsVersion(generatedAt) {
+    assertInternalAccess_("getStatisticsVersion");
     const date = new Date(generatedAt);
     if (Number.isNaN(date.getTime())) {
         return `v${Date.now()}`;
@@ -119,10 +127,14 @@ function getStatisticsVersion(generatedAt) {
 }
 
 function getStatisticsSnapshot() {
+    assertInternalAccess_("getStatisticsSnapshot");
     const cached = getCacheData(STATS_CACHE_KEYS.snapshot);
     if (cached) {
         return cached;
     }
+
+    // 快取未命中時，僅允許老師觸發完整快照讀取，防止學生直接 RPC 呼叫
+    getAuthorizedUserContext(["老師"], "statistics.snapshot.read");
 
     if (!studentChoiceSheet) {
         return { error: "「考生志願列表」工作表不存在，無法產生統計資料。" };
@@ -244,62 +256,60 @@ function getStatisticsSnapshot() {
  * @returns {Object}
  */
 function getStatisticsSummaryData() {
-    try {
-        const context = getAuthorizedUserContext(
-            ["老師", "管理"],
-            "statistics.summary.read",
-        );
-        assertRateLimit("statistics.summary.read", context.sessionEmail, 30);
-        const cached = getCacheData(STATS_CACHE_KEYS.summary);
-        if (cached) {
-            return cached;
-        }
+    return runWithInternalAccess_(function () {
+        try {
+            assertRpcWhitelistAccess_("getStatisticsSummaryData");
+            const cached = getCacheData(STATS_CACHE_KEYS.summary);
+            if (cached) {
+                return cached;
+            }
 
-        const snapshot = getStatisticsSnapshot();
-        if (snapshot.error) {
-            return snapshot;
-        }
+            const snapshot = getStatisticsSnapshot();
+            if (snapshot.error) {
+                return snapshot;
+            }
 
-        const groups = snapshot.groupNames.map((groupName) => {
-            const items = snapshot.groups[groupName] || [];
-            const totalCount = items.reduce((sum, item) => sum + item.count, 0);
-            return {
-                groupName,
-                totalCount,
-                totalChoices: items.length,
-                topChoices: items.slice(
-                    0,
-                    STATS_PERFORMANCE_BUDGET.defaultTopN,
-                ),
+            const groups = snapshot.groupNames.map((groupName) => {
+                const items = snapshot.groups[groupName] || [];
+                const totalCount = items.reduce((sum, item) => sum + item.count, 0);
+                return {
+                    groupName,
+                    totalCount,
+                    totalChoices: items.length,
+                    topChoices: items.slice(
+                        0,
+                        STATS_PERFORMANCE_BUDGET.defaultTopN,
+                    ),
+                };
+            });
+
+            const result = {
+                version: snapshot.version,
+                generatedAt: snapshot.generatedAt,
+                performanceBudget: STATS_PERFORMANCE_BUDGET,
+                totalGroups: groups.length,
+                totalParticipants: snapshot.joinedRows,
+                groups,
             };
-        });
 
-        const result = {
-            version: snapshot.version,
-            generatedAt: snapshot.generatedAt,
-            performanceBudget: STATS_PERFORMANCE_BUDGET,
-            totalGroups: groups.length,
-            totalParticipants: snapshot.joinedRows,
-            groups,
-        };
+            const payloadBytes = Utilities.newBlob(
+                JSON.stringify(result),
+                "application/json",
+            ).getBytes().length;
+            if (payloadBytes > STATS_PERFORMANCE_BUDGET.maxPayloadBytes) {
+                Logger.log(
+                    "(getStatisticsSummaryData)摘要 payload 過大：%d bytes",
+                    payloadBytes,
+                );
+            }
 
-        const payloadBytes = Utilities.newBlob(
-            JSON.stringify(result),
-            "application/json",
-        ).getBytes().length;
-        if (payloadBytes > STATS_PERFORMANCE_BUDGET.maxPayloadBytes) {
-            Logger.log(
-                "(getStatisticsSummaryData)摘要 payload 過大：%d bytes",
-                payloadBytes,
-            );
+            setCacheData(STATS_CACHE_KEYS.summary, result, STATS_CACHE_TTL.summary);
+            return result;
+        } catch (err) {
+            Logger.log("getStatisticsSummaryData 發生錯誤: %s", err.message);
+            return { error: "取得統計摘要時發生錯誤：" + err.message };
         }
-
-        setCacheData(STATS_CACHE_KEYS.summary, result, STATS_CACHE_TTL.summary);
-        return result;
-    } catch (err) {
-        Logger.log("getStatisticsSummaryData 發生錯誤: %s", err.message);
-        return { error: "取得統計摘要時發生錯誤：" + err.message };
-    }
+    });
 }
 
 /**
@@ -310,73 +320,71 @@ function getStatisticsSummaryData() {
  * @returns {Object}
  */
 function getStatisticsGroupDetail(groupName, page = 1, pageSize = 10) {
-    try {
-        const context = getAuthorizedUserContext(
-            ["老師", "管理"],
-            "statistics.group-detail.read",
-        );
-        assertRateLimit("statistics.group-detail.read", context.sessionEmail, 40);
-        const safeGroupName = String(groupName || "").trim();
-        if (!safeGroupName) {
-            return { error: "請提供群類名稱。" };
-        }
+    return runWithInternalAccess_(function () {
+        try {
+            assertRpcWhitelistAccess_("getStatisticsGroupDetail");
+            const safeGroupName = String(groupName || "").trim();
+            if (!safeGroupName) {
+                return { error: "請提供群類名稱。" };
+            }
 
-        const safePage = Math.max(Number(page) || 1, 1);
-        const safePageSize = Math.min(Math.max(Number(pageSize) || 10, 1), 50);
-        const snapshot = getStatisticsSnapshot();
-        if (snapshot.error) {
-            return snapshot;
-        }
+            const safePage = Math.max(Number(page) || 1, 1);
+            const safePageSize = Math.min(Math.max(Number(pageSize) || 10, 1), 50);
+            const snapshot = getStatisticsSnapshot();
+            if (snapshot.error) {
+                return snapshot;
+            }
 
-        const cacheKey = getStatisticsGroupDetailCacheKey(
-            safeGroupName,
-            safePage,
-            safePageSize,
-            snapshot.version || "",
-        );
-        const cached = getCacheData(cacheKey);
-        if (cached) {
-            return cached;
-        }
-
-        const groupItems = snapshot.groups[safeGroupName];
-        if (!groupItems) {
-            return { error: `找不到群類「${safeGroupName}」的統計資料。` };
-        }
-
-        const start = (safePage - 1) * safePageSize;
-        const end = start + safePageSize;
-        const pageItems = groupItems.slice(start, end);
-
-        const result = {
-            version: snapshot.version,
-            generatedAt: snapshot.generatedAt,
-            groupName: safeGroupName,
-            page: safePage,
-            pageSize: safePageSize,
-            totalItems: groupItems.length,
-            hasMore: end < groupItems.length,
-            items: pageItems,
-        };
-
-        const payloadBytes = Utilities.newBlob(
-            JSON.stringify(result),
-            "application/json",
-        ).getBytes().length;
-        if (payloadBytes > STATS_PERFORMANCE_BUDGET.maxPayloadBytes) {
-            Logger.log(
-                "(getStatisticsGroupDetail)明細 payload 過大：%d bytes (%s)",
-                payloadBytes,
+            const cacheKey = getStatisticsGroupDetailCacheKey(
                 safeGroupName,
+                safePage,
+                safePageSize,
+                snapshot.version || "",
             );
-        }
+            const cached = getCacheData(cacheKey);
+            if (cached) {
+                return cached;
+            }
 
-        setCacheData(cacheKey, result, STATS_CACHE_TTL.groupDetail);
-        return result;
-    } catch (err) {
-        Logger.log("getStatisticsGroupDetail 發生錯誤: %s", err.message);
-        return { error: "取得群類明細時發生錯誤：" + err.message };
-    }
+            const groupItems = snapshot.groups[safeGroupName];
+            if (!groupItems) {
+                return { error: `找不到群類「${safeGroupName}」的統計資料。` };
+            }
+
+            const start = (safePage - 1) * safePageSize;
+            const end = start + safePageSize;
+            const pageItems = groupItems.slice(start, end);
+
+            const result = {
+                version: snapshot.version,
+                generatedAt: snapshot.generatedAt,
+                groupName: safeGroupName,
+                page: safePage,
+                pageSize: safePageSize,
+                totalItems: groupItems.length,
+                hasMore: end < groupItems.length,
+                items: pageItems,
+            };
+
+            const payloadBytes = Utilities.newBlob(
+                JSON.stringify(result),
+                "application/json",
+            ).getBytes().length;
+            if (payloadBytes > STATS_PERFORMANCE_BUDGET.maxPayloadBytes) {
+                Logger.log(
+                    "(getStatisticsGroupDetail)明細 payload 過大：%d bytes (%s)",
+                    payloadBytes,
+                    safeGroupName,
+                );
+            }
+
+            setCacheData(cacheKey, result, STATS_CACHE_TTL.groupDetail);
+            return result;
+        } catch (err) {
+            Logger.log("getStatisticsGroupDetail 發生錯誤: %s", err.message);
+            return { error: "取得群類明細時發生錯誤：" + err.message };
+        }
+    });
 }
 
 /**
@@ -384,6 +392,7 @@ function getStatisticsGroupDetail(groupName, page = 1, pageSize = 10) {
  * @returns {boolean}
  */
 function clearStatisticsCache() {
+    assertInternalAccess_("clearStatisticsCache");
     try {
         const keysToClear = [
             STATS_CACHE_KEYS.snapshot,
@@ -409,6 +418,7 @@ function clearStatisticsCache() {
  * @returns {Object}
  */
 function getStatisticsPerformanceConfig() {
+    assertInternalAccess_("getStatisticsPerformanceConfig");
     return {
         version: "stats-budget-v1",
         generatedAt: new Date().toISOString(),
@@ -421,41 +431,43 @@ function getStatisticsPerformanceConfig() {
  * @returns {Object} 依類群分類的志願統計資料或包含錯誤訊息的物件
  */
 function getRawStatisticsData() {
-    try {
-        getAuthorizedUserContext(["老師", "管理"], "statistics.raw.read");
-        const cachedData = getCacheData(CACHE_KEYS.STATISTICS_RAW_DATA);
-        if (cachedData) {
-            return cachedData;
-        }
+    return runWithInternalAccess_(function () {
+        try {
+            assertRpcWhitelistAccess_("getRawStatisticsData");
+            const cachedData = getCacheData(CACHE_KEYS.STATISTICS_RAW_DATA);
+            if (cachedData) {
+                return cachedData;
+            }
 
-        const snapshot = getStatisticsSnapshot();
-        if (snapshot.error) {
-            return snapshot;
-        }
+            const snapshot = getStatisticsSnapshot();
+            if (snapshot.error) {
+                return snapshot;
+            }
 
-        const result = {};
-        snapshot.groupNames.forEach((groupName) => {
-            result[groupName] = (snapshot.groups[groupName] || []).map(
-                (item) => ({
-                    name: item.choiceLabel,
-                    count: item.count,
-                    choiceCode: item.choiceCode,
-                    choiceName: item.choiceName,
-                    choiceLabel: item.choiceLabel,
-                }),
+            const result = {};
+            snapshot.groupNames.forEach((groupName) => {
+                result[groupName] = (snapshot.groups[groupName] || []).map(
+                    (item) => ({
+                        name: item.choiceLabel,
+                        count: item.count,
+                        choiceCode: item.choiceCode,
+                        choiceName: item.choiceName,
+                        choiceLabel: item.choiceLabel,
+                    }),
+                );
+            });
+
+            setCacheData(
+                CACHE_KEYS.STATISTICS_RAW_DATA,
+                result,
+                STATS_CACHE_TTL.snapshot,
             );
-        });
-
-        setCacheData(
-            CACHE_KEYS.STATISTICS_RAW_DATA,
-            result,
-            STATS_CACHE_TTL.snapshot,
-        );
-        return result;
-    } catch (err) {
-        Logger.log("getRawStatisticsData 發生錯誤: %s", err.message);
-        return { error: "產生統計資料時發生未預期的錯誤：" + err.message };
-    }
+            return result;
+        } catch (err) {
+            Logger.log("getRawStatisticsData 發生錯誤: %s", err.message);
+            return { error: "產生統計資料時發生未預期的錯誤：" + err.message };
+        }
+    });
 }
 
 /**
@@ -463,36 +475,35 @@ function getRawStatisticsData() {
  * @returns {Object} 包含唯一群類名稱陣列或錯誤訊息的物件
  */
 function getUniqueGroupNames() {
-    try {
-        getAuthorizedUserContext(
-            ["老師", "管理"],
-            "statistics.group-names.read",
-        );
-        const cachedData = getCacheData(CACHE_KEYS.STATISTICS_GROUP_NAMES);
-        if (cachedData) {
-            return cachedData;
+    return runWithInternalAccess_(function () {
+        try {
+            assertRpcWhitelistAccess_("getUniqueGroupNames");
+            const cachedData = getCacheData(CACHE_KEYS.STATISTICS_GROUP_NAMES);
+            if (cachedData) {
+                return cachedData;
+            }
+
+            const summary = getStatisticsSummaryData();
+            if (summary.error) {
+                return summary;
+            }
+
+            const result = {
+                version: summary.version,
+                generatedAt: summary.generatedAt,
+                groupNames: (summary.groups || []).map((group) => group.groupName),
+            };
+
+            setCacheData(
+                CACHE_KEYS.STATISTICS_GROUP_NAMES,
+                result,
+                STATS_CACHE_TTL.summary,
+            );
+
+            return result;
+        } catch (err) {
+            Logger.log("getUniqueGroupNames 發生錯誤: %s", err.message);
+            return { error: "取得唯一群類名稱時發生未預期的錯誤：" + err.message };
         }
-
-        const summary = getStatisticsSummaryData();
-        if (summary.error) {
-            return summary;
-        }
-
-        const result = {
-            version: summary.version,
-            generatedAt: summary.generatedAt,
-            groupNames: (summary.groups || []).map((group) => group.groupName),
-        };
-
-        setCacheData(
-            CACHE_KEYS.STATISTICS_GROUP_NAMES,
-            result,
-            STATS_CACHE_TTL.summary,
-        );
-
-        return result;
-    } catch (err) {
-        Logger.log("getUniqueGroupNames 發生錯誤: %s", err.message);
-        return { error: "取得唯一群類名稱時發生未預期的錯誤：" + err.message };
-    }
+    });
 }
