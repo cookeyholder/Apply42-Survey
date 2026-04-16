@@ -10,7 +10,7 @@ const CSV_MIME_TYPE = "text/csv";
  * @returns {boolean} 是否為安全的關鍵字
  */
 function isValidSearchKeyword(keyword) {
-    assertInternalAccess_("isValidSearchKeyword");
+  assertInternalAccess_("isValidSearchKeyword");
   if (!keyword || typeof keyword !== "string") {
     return false;
   }
@@ -26,7 +26,7 @@ function isValidSearchKeyword(keyword) {
  * @returns {boolean} 是否有效
  */
 function validateRowUpdate(row, values) {
-    assertInternalAccess_("validateRowUpdate");
+  assertInternalAccess_("validateRowUpdate");
   // 檢查列號
   if (!Number.isInteger(row) || row < 1 || row > MAX_SHEET_ROWS) {
     Logger.log("(validateRowUpdate)無效的列號：%s", row);
@@ -62,7 +62,7 @@ function validateRowUpdate(row, values) {
  * @returns {number} 找到的列號，未找到回傳 0
  */
 function findValueRow(keyword, targetRange) {
-    assertInternalAccess_("findValueRow");
+  assertInternalAccess_("findValueRow");
   try {
     Logger.log("(findValueRow)關鍵字：%s", keyword);
     // 驗證輸入參數
@@ -131,7 +131,7 @@ function findValueRow(keyword, targetRange) {
  * @param {Array} values - 二維陣列志願資料
  */
 function updateSpecificRow(row, values) {
-    assertInternalAccess_("updateSpecificRow");
+  assertInternalAccess_("updateSpecificRow");
   try {
     const context = getAuthorizedUserContext(
       ["學生"],
@@ -223,7 +223,7 @@ function updateSpecificRow(row, values) {
  * @returns {boolean} 是否安全
  */
 function validateExportData(data) {
-    assertInternalAccess_("validateExportData");
+  assertInternalAccess_("validateExportData");
   if (!Array.isArray(data) || data.length === 0) {
     return false;
   }
@@ -243,7 +243,7 @@ function validateExportData(data) {
  * @returns {Array} 清理後的資料
  */
 function sanitizeExportData(data) {
-    assertInternalAccess_("sanitizeExportData");
+  assertInternalAccess_("sanitizeExportData");
   return data.map((row) =>
     row.map((cell) => {
       if (cell === null || cell === undefined) return "";
@@ -260,7 +260,7 @@ function sanitizeExportData(data) {
  * @returns {boolean} 參數是否安全
  */
 function validateRequestParameters(configs) {
-    assertInternalAccess_("validateRequestParameters");
+  assertInternalAccess_("validateRequestParameters");
   if (!configs || typeof configs !== "object") {
     return false;
   }
@@ -450,7 +450,7 @@ function exportCsv() {
  * @returns {{headers: Array, data: Array}|null} 工作表資料或 null
  */
 function getSheetDataSafely(sheet, requiredHeaders = []) {
-    assertInternalAccess_("getSheetDataSafely");
+  assertInternalAccess_("getSheetDataSafely");
   try {
     if (!sheet) {
       Logger.log("(getSheetDataSafely)工作表不存在");
@@ -516,7 +516,7 @@ function getSheetDataSafely(sheet, requiredHeaders = []) {
  * @returns {boolean} 是否為有效的電子郵件
  */
 function isValidEmail(email) {
-    assertInternalAccess_("isValidEmail");
+  assertInternalAccess_("isValidEmail");
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return (
     typeof email === "string" &&
@@ -532,7 +532,7 @@ function isValidEmail(email) {
  * @returns {string} 安全的快取鍵值
  */
 function getSafeKeyFromEmail(email) {
-    assertInternalAccess_("getSafeKeyFromEmail");
+  assertInternalAccess_("getSafeKeyFromEmail");
   if (!email || typeof email !== "string") {
     return "";
   }

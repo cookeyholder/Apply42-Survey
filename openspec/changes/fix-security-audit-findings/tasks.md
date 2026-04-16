@@ -1,7 +1,7 @@
 ## 1. 高優先修補：伺服端授權與資訊外洩（P0）
 
-- [x] 1.1 開啟 `statistics.gs`，在 `getStatisticsSnapshot()` 函式第一行加入 `getAuthorizedUserContext(["老師", "管理"], "statistics.snapshot.read")`（與 `getStatisticsSummaryData()` 呼叫模式一致）
-- [x] 1.2 搜尋所有呼叫 `getStatisticsSnapshot` 的程式碼路徑（含 HTML 檔案），確認每個呼叫端均在老師/管理角色情境下，不存在學生角色合法呼叫路徑
+- [x] 1.1 開啟 `statistics.gs`，在 `getStatisticsSnapshot()` 函式第一行加入 `getAuthorizedUserContext(["老師"], "statistics.snapshot.read")`（與 `getStatisticsSummaryData()` 呼叫模式一致）
+- [x] 1.2 搜尋所有呼叫 `getStatisticsSnapshot` 的程式碼路徑（含 HTML 檔案），確認每個呼叫端均在老師角色情境下，不存在學生角色合法呼叫路徑
 - [x] 1.3 開啟 `main.gs`，找到 `doGet` catch 區塊中的 `<details>` 標籤段落，移除整個 `<details>...</details>` 揭露 `err.stack` 的 HTML 區塊，確保只保留通用錯誤訊息給前端
 - [x] 1.4 確認 `main.gs` 的 `doGet` 錯誤路徑有呼叫 `Logger.log(err)` 或等效記錄確保 stack trace 保留在後端日誌
 
@@ -20,10 +20,10 @@
 
 ## 4. 中優先修補：郵件去重（P2）
 
-- [x] 4.1 開啟 `mail.gs`，在 `sendResultNotificationEmail()` 函式頂端計算去重 hash：`const dedupKey = 'mail_dedup_' + sha256Hex(recipientEmail + JSON.stringify([...choices].sort()))`
+- [x] 4.1 開啟 `mail.gs`，在 `sendResultNotificationEmail()` 函式頂端計算去重 hash：`const dedupKey = 'mail_dedup_' + toSha256Hex(recipientEmail + JSON.stringify([...choices].sort()))`
 - [x] 4.2 在計算 hash 後，查詢 CacheService：`if (CacheService.getScriptCache().get(dedupKey)) return;`，命中時直接回傳不寄信
 - [x] 4.3 在成功呼叫寄信 API 後，寫入去重快取：`CacheService.getScriptCache().put(dedupKey, '1', 600)`（TTL 600 秒）
-- [x] 4.4 確認 `sha256Hex()` 工具函式已在 `utilities.gs` 定義且可在 `mail.gs` 中使用（GAS 全域範雇，通常不需 import）
+- [x] 4.4 確認 `toSha256Hex()` 工具函式已在 `securityRuntime.gs` 定義且可在 `mail.gs` 中使用（GAS 全域範圍，通常不需 import）
 
 ## 5. 驗證與整合確認
 

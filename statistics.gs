@@ -5,7 +5,7 @@ function showStatisticsPage() {
     return runWithInternalAccess_(function () {
         const context = getAuthorizedUserContext(["老師"], "statistics.page.open");
         assertRateLimit("statistics.page.open", context.sessionEmail, 20);
-        let htmlOutput = HtmlService.createTemplateFromFile("statisticsTemplate.html")
+        let htmlOutput = HtmlService.createTemplateFromFile("statisticsTemplate")
             .evaluate()
             .setWidth(900)
             .setHeight(700);
